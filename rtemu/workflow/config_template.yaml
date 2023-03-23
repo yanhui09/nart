@@ -1,0 +1,51 @@
+# variables to configure the workflow on a global scale
+basecalled_dir: 
+database_dir: 
+demultiplexed_dir:
+merge_runs:
+
+threads:
+  normal: 2 # common jobs
+  large: 6 # threads-dependent jobs
+mem:
+  normal: 10
+  large: 50
+# runtime (h) only for cluster excution
+runtime:
+  default: 5
+  long: 30
+  simple: 1
+
+##############################################################
+# Demultiplex
+demuxer: guppy # guppy | minibar 
+guppy:
+  barcode_kits: "SQK16S-GXO192"
+minibar:
+  args: "-p 0.75 -l 160"
+nreads_m: 50 # rm barcoded samples in shallow sequencing
+##############################################################
+# Quality control
+subsample: True
+# filter reads by quality and length range
+seqkit:
+  n: 5000 # subsampling number [int]
+  min_qual: 7
+  min_len: 800
+  max_len: 1500
+
+# trim primers
+trim: True
+# order matters
+fprimer:
+  27Fa: "AGAGTTTGATYMTGGCTYAG"
+  27Fb: "AGGGTTCGATTCTGGCTCAG"
+  338Fa: "ACWCCTACGGGWGGCAGCAG"
+  338Fb: "GACTCCTACGGGAGGCWGCAG"
+rprimer: 
+  1540R: "TACGGYTACCTTGTTACGACT"
+  1391R: "GACGGGCGGTGTGTRCA"
+
+cutadapt:
+  max_errors: 0.2
+  min_overlap: 6

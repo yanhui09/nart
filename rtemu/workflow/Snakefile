@@ -1,0 +1,43 @@
+#--------------
+configfile: "config.yaml"
+#--------------
+DATABASE_DIR = config["database_dir"].rstrip("/")
+
+def check_val(var, val, class_type):
+    if not isinstance(val, class_type):
+        warns = ("\n  " + str(var) + " only accepts " + str(class_type) + " values." +
+        "\n  " + str(val) + " is used in config.yaml file.")
+        raise ValueError(warns)
+
+# check list elements
+def check_list_ele(var, val, eles):
+    var = var.capitalize()
+    if val:
+        for i in val:
+            if i not in eles:
+                raise ValueError("\n  {} parameters not recognized.\n  Please choose from {} in the config.yaml file.".format(var,eles))
+    else:
+        raise ValueError("\n  {} parameters not specified.\n  Please choose from {} in the config.yaml file.".format(var,eles))
+
+localrules: all, demux, qc
+rule all:
+    input:
+        chimera_filt(),
+        ["taxonomy/" + str(x) + "/taxonomy.tsv" for x in config["classifier"]],
+        "taxonomy.tsv",
+        ["tree/" + str(x) + "/tree.nwk" for x in config["phylogeny"]],
+        "tree.nwk",
+
+include: "rules/init.smk"
+include: "rules/demux.smk"
+include: "rules/qc.smk"
+
+rule demux:
+    input: lambda wc: expand("qc/{barcode}.fastq", barcode=get_demux_barcodes(wc))
+
+rule qc:
+    input: lambda wc: get_filt(wc),
+
+rule emu:
+    input: lambda wc: get_kmerBin(wc),
+
