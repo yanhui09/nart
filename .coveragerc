@@ -1,0 +1,7 @@
+[report]
+omit =
+    setup.py
+    rtemu/__main__.py
+    rtemu/_version.py
+    versioneer.py
+    tests/*
