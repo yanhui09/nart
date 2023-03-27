@@ -17,7 +17,7 @@ setup(
     packages=['rtemu'],
     entry_points={
         'console_scripts': [
-            'workflow=rtemu.workflow:cli'
+            'emuwf=rtemu.workflow:cli'
         ]
     },
     install_requires=requirements,

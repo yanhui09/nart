@@ -49,3 +49,7 @@ rprimer:
 cutadapt:
   max_errors: 0.2
   min_overlap: 6
+
+emu:
+  # emu|rdp|silva|unite-fungi|unite-all
+  prebuilt_database: emu

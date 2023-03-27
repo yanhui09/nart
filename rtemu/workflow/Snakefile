@@ -2,6 +2,7 @@
 configfile: "config.yaml"
 #--------------
 DATABASE_DIR = config["database_dir"].rstrip("/")
+DATABASE_PREBUILT = config["emu"]["prebuilt_database"]
 
 def check_val(var, val, class_type):
     if not isinstance(val, class_type):
@@ -21,12 +22,7 @@ def check_list_ele(var, val, eles):
 
 localrules: all, demux, qc
 rule all:
-    input:
-        chimera_filt(),
-        ["taxonomy/" + str(x) + "/taxonomy.tsv" for x in config["classifier"]],
-        "taxonomy.tsv",
-        ["tree/" + str(x) + "/tree.nwk" for x in config["phylogeny"]],
-        "tree.nwk",
+    input: lambda wc: get_filt(wc),
 
 include: "rules/init.smk"
 include: "rules/demux.smk"
@@ -38,6 +34,6 @@ rule demux:
 rule qc:
     input: lambda wc: get_filt(wc),
 
-rule emu:
-    input: lambda wc: get_kmerBin(wc),
+#rule emu:
+#    input:
 

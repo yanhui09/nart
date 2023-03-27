@@ -56,7 +56,6 @@ rule trim_primers:
     output: 
         trimmed = temp("qc/primers_trimmed/{barcode}F.fastq"),
         untrimmed = temp("qc/primers_untrimmed/{barcode}F.fastq"),
-    conda: "../envs/cutadapt.yaml"
     params:
         f = f5_pattern1,
         e = config["cutadapt"]["max_errors"],
@@ -100,7 +99,6 @@ use rule trim_primers as trim_primersR with:
 rule revcomp_fq:
     input: rules.trim_primersR.output.trimmed
     output: temp("qc/primers_trimmed/{barcode}R_revcomp.fastq")
-    conda: "../envs/seqkit.yaml"
     log: "logs/qc/revcomp_fq/{barcode}.log"
     benchmark: "benchmarks/qc/revcomp_fq/{barcode}.txt"
     threads: config["threads"]["normal"]
@@ -120,7 +118,6 @@ def trim_check(trim = config["trim"], subsample = config["subsample"], n = confi
 rule q_filter:
     input: trim_check()
     output: "qc/qfilt/{barcode}.fastq"
-    conda: "../envs/seqkit.yaml"
     params:
         Q = config["seqkit"]["min_qual"],
         m = config["seqkit"]["min_len"],
@@ -145,16 +142,6 @@ def get_qced_barcodes(wildcards):
             barcodes.remove(i)
     return barcodes
 
-localrules: combine_fastq
-#  sample pooling to increase sensitivity 
-rule combine_fastq:
-    input: lambda wc: expand("qc/qfilt/{barcode}.fastq", barcode=get_qced_barcodes(wc))
-    output: "qc/qfilt/pooled.fastq"
-    shell: "cat {input} > {output}"
-
-def get_filt(wildcards, pool = config["pool"]):
+def get_filt(wildcards):
     barcodes = get_qced_barcodes(wildcards) 
-    check_val("pool", pool, bool)
-    if pool is True:
-        barcodes.append("pooled")
     return expand("qc/qfilt/{barcode}.fastq", barcode=barcodes)

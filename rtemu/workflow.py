@@ -219,7 +219,7 @@ def cli(self):
 @click.argument(
     "workflow",
     type=click.Choice(
-        ["demux", "qc","all","init"]
+        ["init","demux", "qc","all"]
     ),
 )
 @click.argument("snake_args", nargs=-1, type=click.UNPROCESSED)
@@ -282,7 +282,7 @@ def run_workflow(workflow, workdir, configfile, jobs, maxmem, profile, dryrun, s
 @click.option(
     "--fqs-min",
     type=int,
-    default=1000,
+    default=50,
     show_default=True,
     help="Minimum number of reads for the demultiplexed fastqs.",
 )

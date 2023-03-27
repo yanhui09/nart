@@ -13,6 +13,8 @@ def init_conf(
     nreads_m = 1000,
     subsample=False,
     no_trim=False,
+    jobs_m=2,
+    jobs_M=6,
 ):
     """
     Reads template config file with comments from ./template_config.yaml
@@ -27,6 +29,8 @@ def init_conf(
         nreads_m (int): minimum number of reads for the demultiplexed fastqs
         subsample (bool): if True, subsample the reads [default: False]
         no_trim (bool): if True, do not trim the primers [default: False]
+        jobs_m (int): number of jobs for common tasks [default: 2]
+        jobs_M (int): number of jobs for threads-dependent tasks [default: 6]
    """
     os.makedirs(dbdir, exist_ok=True)
     os.makedirs(workdir, exist_ok=True)
@@ -40,7 +44,6 @@ def init_conf(
     conf["database_dir"] = dbdir
     conf["demuxer"] = demuxer
     conf["nreads_m"] = nreads_m
-    conf["pool"] = not no_pool
     conf["subsample"] = subsample
     conf["trim"] = not no_trim
     conf["threads"]["normal"] = jobs_m
