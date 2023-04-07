@@ -22,11 +22,12 @@ def check_list_ele(var, val, eles):
 
 localrules: all, demux, qc
 rule all:
-    input: lambda wc: get_filt(wc),
+    input: "otu_table.tsv"
 
 include: "rules/init.smk"
 include: "rules/demux.smk"
 include: "rules/qc.smk"
+include: "rules/emu.smk"
 
 rule demux:
     input: lambda wc: expand("qc/{barcode}.fastq", barcode=get_demux_barcodes(wc))
@@ -34,6 +35,6 @@ rule demux:
 rule qc:
     input: lambda wc: get_filt(wc),
 
-#rule emu:
-#    input:
+rule abundance:
+    input: "otu_table.tsv"
 

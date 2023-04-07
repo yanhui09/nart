@@ -1,5 +1,5 @@
 # rules to initialize database
-localrules: init_database, emu_prebuilt
+localrules: init, emu_prebuilt
 rule init:
     input: 
         expand(DATABASE_DIR + "/emu/" + DATABASE_PREBUILT + "_prebuilt/{file}", file = ["species_taxid.fasta", "taxonomy.tsv"])
