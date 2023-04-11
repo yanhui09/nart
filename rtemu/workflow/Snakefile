@@ -3,6 +3,18 @@ configfile: "config.yaml"
 #--------------
 DATABASE_DIR = config["database_dir"].rstrip("/")
 DATABASE_PREBUILT = config["emu"]["prebuilt_database"]
+# use basecall_fq file basename or demux dirname as batch dir
+def get_batch_dir(basc_fq = config["basecall_fq"], demux_dir = config["demultiplex_dir"]):
+    # only and at least one is allowed
+    if basc_fq is not None and demux_dir is not None:
+        raise ValueError("Only one of 'basecall_fq' and 'demultiplex_dir' can be specified in config.")
+    if basc_fq is None and demux_dir is None:
+        raise ValueError("One of 'basecall_fq' and 'demultiplex_dir' must be specified in config.")
+    if demux_dir is not None:
+        return os.path.basename(demux_dir) + "_b0"
+    else:
+        return os.path.basename(basc_fq).split(".")[0]
+BATCH_ID = get_batch_dir()
 
 def check_val(var, val, class_type):
     if not isinstance(val, class_type):
@@ -22,7 +34,7 @@ def check_list_ele(var, val, eles):
 
 localrules: all, demux, qc
 rule all:
-    input: "otu_table.tsv"
+    input: "otu_table_{}.tsv".format(BATCH_ID)
 
 include: "rules/init.smk"
 include: "rules/demux.smk"

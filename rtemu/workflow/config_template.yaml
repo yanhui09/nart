@@ -1,8 +1,7 @@
 # variables to configure the workflow on a global scale
-basecalled_dir: 
+basecall_fq: 
 database_dir: 
-demultiplexed_dir:
-merge_runs:
+demultiplex_dir:
 
 threads:
   normal: 2 # common jobs

@@ -66,9 +66,9 @@ def run_smk(workflow, workdir, configfile, jobs, maxmem, profile, dryrun, snake_
     conf = load_configfile(configfile)
     # if snake_args (tuple, whitespace removed) contain "basecalled_dir=", take everything after as basecalled_dir
     for arg in snake_args:
-        if "basecalled_dir=" in arg:
-            conf["basecalled_dir"] = arg.split("=")[1]
-    basecalled_dir = conf["basecalled_dir"]
+        if "basecall_fq=" in arg:
+            conf["basecall_fq"] = arg.split("=")[1]
+    basecall_fq = conf["basecall_fq"]
     db_dir = conf["database_dir"]
     cmd = (
         "snakemake "
@@ -92,10 +92,10 @@ def run_smk(workflow, workdir, configfile, jobs, maxmem, profile, dryrun, snake_
         configfile=configfile,
         conda_prefix="--conda-prefix '" + os.path.join(db_dir, "conda_envs") + "'",
         singularity_prefix="--use-singularity --singularity-prefix '" + os.path.join(db_dir, "singularity_envs") + "'"
-        if basecalled_dir is not None else "",
+        if basecall_fq is not None else "",
         singularity_args="--singularity-args '--bind " +
-        os.path.dirname(snakefile) + "/resources/guppy_barcoding/:/opt/ont/guppy/data/barcoding/," + basecalled_dir + "'"
-        if basecalled_dir is not None else "",
+        os.path.dirname(snakefile) + "/resources/guppy_barcoding/:/opt/ont/guppy/data/barcoding/," + basecall_fq + "'"
+        if basecall_fq is not None else "",
         dryrun="--dryrun" if dryrun else "",
         jobs=int(jobs) if jobs is not None else 1,
         max_mem=handle_max_mem(maxmem, profile),
@@ -241,11 +241,11 @@ def run_workflow(workflow, workdir, configfile, jobs, maxmem, profile, dryrun, s
 )
 @click.option(
     "-b",
-    "--bascdir",
-    help="Path to a directory of the basecalled fastq files.",
+    "--bascfq",
+    help="Path to a basecalled fastq file.",
     type=click.Path(dir_okay=True,writable=True,resolve_path=True),
     cls = AloMutex,
-    required_if_not = [],
+    required_if_not = ["demuxdir"],
     not_required_if = ["demuxdir"],
 )
 @click.option(
@@ -254,8 +254,8 @@ def run_workflow(workflow, workdir, configfile, jobs, maxmem, profile, dryrun, s
     help="Path to a directory of demultiplexed fastq files.",
     type=click.Path(dir_okay=True,writable=True,resolve_path=True),
     cls = AloMutex,
-    required_if_not = [],
-    not_required_if = ["bascdir"],
+    required_if_not = ["bascfq"],
+    not_required_if = ["bascfq"],
 )
 @click.option(
     "-d",
@@ -315,14 +315,14 @@ def run_workflow(workflow, workdir, configfile, jobs, maxmem, profile, dryrun, s
     help="Number of jobs for threads-dependent tasks.",
 )
 def config_workflow(
-    bascdir, demuxdir, dbdir, workdir, demuxer, fqs_min, subsample, no_trim, 
+    bascfq, demuxdir, dbdir, workdir, demuxer, fqs_min, subsample, no_trim, 
     jobs_min, jobs_max):
     """
     Config RT-Emu workflow.
     """ 
     logger.info(f"RT-Emu version: {__version__}")
     init_conf(
-        bascdir, demuxdir, dbdir, workdir, "config.yaml", demuxer, fqs_min, subsample,
+        bascfq, demuxdir, dbdir, workdir, "config.yaml", demuxer, fqs_min, subsample,
         no_trim, jobs_min, jobs_max)
    
 if __name__ == "__main__":

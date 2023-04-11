@@ -4,7 +4,7 @@ import os
 from ruamel.yaml import YAML
 
 def init_conf(
-    bascdir,
+    bascfq,
     demuxdir,
     dbdir,
     workdir,
@@ -20,7 +20,7 @@ def init_conf(
     Reads template config file with comments from ./template_config.yaml
     updates it by the parameters provided.
     Args:
-        bascdir (str): path to a directory of basecalled fastq files
+        bascfq (str): path to a directory of basecalled fastq files
         demuxdir (str): path to a directory of demultiplexed fastq files
         dbdir (str): path to the taxonomy database
         workdir (str): path to the working directory
@@ -40,7 +40,9 @@ def init_conf(
     
     with open(template_conf_file) as template_conf:
         conf = yaml.load(template_conf)
-        
+    
+    conf["basecall_fq"] = bascfq
+    conf["demultiplex_dir"] = demuxdir    
     conf["database_dir"] = dbdir
     conf["demuxer"] = demuxer
     conf["nreads_m"] = nreads_m

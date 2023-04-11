@@ -1,37 +1,41 @@
 rule emu:
-    input: "qc/qfilt/{barcode}.fastq"
-    output: temp("emu/{barcode}_rel-abundance.tsv")
+    input: 
+        rules.emu_prebuilt.output,
+        fq = BATCH_ID + "/qc/qfilt/{barcode}.fastq",
+    output: temp(BATCH_ID + "/emu/{barcode}_rel-abundance.tsv")
     conda: "../envs/emu.yaml"
     params: 
         db = DATABASE_DIR + "/emu/" + DATABASE_PREBUILT + "_prebuilt",
-        outdir = os.getcwd() + "/emu"
-    log: "logs/emu/{barcode}.log"
-    benchmark: "benchmarks/emu/{barcode}.txt"
+        outdir = os.getcwd() + "/" + BATCH_ID + "/emu"
+    log: "logs/emu/{barcode}_" + BATCH_ID + ".log"
+    benchmark: "benchmarks/emu/{barcode}_" + BATCH_ID + ".txt"
     threads: config["threads"]["large"]
     resources:
         mem = config["mem"]["normal"],
         time = config["runtime"]["default"],
     shell:
-        "emu abundance --db {params.db} {input} "
+        "emu abundance --db {params.db} {input.fq} "
         " --keep-counts --threads {threads} "
         " --output-dir {params.outdir} "
         " > {log} 2>&1 "
 
 def get_emu(wildcards):
     barcodes = get_qced_barcodes(wildcards) 
-    return expand("emu/{barcode}_rel-abundance.tsv", barcode=barcodes)
+    return expand(BATCH_ID + "/emu/{barcode}_rel-abundance.tsv", barcode=barcodes)
 
 localrules: emu_merge
 rule emu_merge:
-    input: get_emu
-    output: "otu_table.tsv"
+    input: 
+        demux_dir = BATCH_ID + "/demultiplexed",
+        otutab = get_emu,
+    output: "otu_table_{}.tsv".format(BATCH_ID)
     resources:
         mem = config["mem"]["normal"],
     run:
         import pandas as pd
         # merge tsv files
         otu_table = pd.DataFrame()
-        for f in input:
+        for f in input.otutab:
             # get file name
             barcode = os.path.basename(f).split("_")[0]
             table = pd.read_csv(f, sep="\t")
