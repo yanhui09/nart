@@ -97,18 +97,18 @@ def check_basecall_fq(fq = config["basecall_fq"]):
 def get_demux(demux=config["demuxer"], demux_external=config["demultiplex_dir"], batch_id=BATCH_ID):
     if demux_external is not None:
         check_demux_dir(demux_external)
-        return BATCH_ID + "/demux_external"
+        return batch_id + "/demux_external"
     else:
         if demux != "guppy" and demux != "minibar":
             raise ValueError("Demultiplexer not recognized. Choose guppy or minibar in config.")
         check_basecall_fq()
-        return BATCH_ID + "/demux_" + demux
+        return batch_id + "/demux_" + demux
 
 checkpoint demux_check:
     input: get_demux()
-    output: temp(directory(BATCH_ID + "/demultiplexed"))
-    log: "logs/demultiplex/check_{}.log".format(BATCH_ID)
-    benchmark: "benchmarks/demultiplex/check_{}.txt".format(BATCH_ID)
+    output: temp(directory("{batch}/demultiplexed"))
+    log: "logs/demultiplex/check_{batch}.log"
+    benchmark: "benchmarks/demultiplex/check_{batch}.txt"
     params:
         nreads_m=config["nreads_m"],
     shell: 
@@ -133,10 +133,10 @@ checkpoint demux_check:
         """
 
 rule collect_fastq:
-    input:  BATCH_ID + "/demultiplexed/{barcode}"
-    output: temp(BATCH_ID + "/qc/{barcode}.fastq")
-    log: "logs/demultiplex/collect_fastq/{barcode}_" + BATCH_ID + ".log"
-    benchmark: "benchmarks/demultiplex/collect_fastq/{barcode}_" + BATCH_ID + ".txt"
+    input:  "{batch}/demultiplexed/{barcode}"
+    output: temp("{batch}/qc/{barcode}.fastq")
+    log: "logs/demultiplex/collect_fastq/{barcode}_{batch}.log"
+    benchmark: "benchmarks/demultiplex/collect_fastq/{barcode}_{batch}.txt"
     shell: "cat {input}/*.fastq | seqkit sana 2> {log} | seqkit rename -w0 -o {output} 2>> {log}"
 
 def get_demux_barcodes(wildcards):

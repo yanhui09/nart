@@ -46,7 +46,3 @@ rule demux:
 
 rule qc:
     input: lambda wc: get_filt(wc),
-
-rule abundance:
-    input: "otu_table.tsv"
-
