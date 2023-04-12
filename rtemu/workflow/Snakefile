@@ -34,7 +34,7 @@ def check_list_ele(var, val, eles):
 
 localrules: all, demux, qc
 rule all:
-    input: "otu_table_{}.tsv".format(BATCH_ID)
+    input: "batches/{}.tsv".format(BATCH_ID)
 
 include: "rules/init.smk"
 include: "rules/demux.smk"

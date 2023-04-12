@@ -28,7 +28,7 @@ rule emu_merge:
     input: 
         demux_dir = "{batch}/demultiplexed",
         otutab = get_emu,
-    output: "otu_table_{batch}.tsv"
+    output: "batches/{batch}.tsv"
     resources:
         mem = config["mem"]["normal"],
     run:
