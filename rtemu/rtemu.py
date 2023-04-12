@@ -204,11 +204,13 @@ def run_rtemu(file_list, wait_minutes, workflow, workdir, configfile, jobs, maxm
                 
         # check if the fqs.txt is updated
         if file_time == os.path.getmtime(file_list):
-            # if not updated, wait
-            time.sleep(60*int(wait_minutes))
+            # if not updated, wait 30s and check again
+            time.sleep(30)
             if file_time == os.path.getmtime(file_list):
-                print("No new files added in the last {} minutes. Exiting.".format(wait_minutes))
-                break      
+                time.sleep(60*int(wait_minutes))
+                if file_time == os.path.getmtime(file_list):
+                    print("No new files added in the last {} minutes. Exiting.".format(wait_minutes))
+                    break      
   
 @cli.command(
     "run",
