@@ -39,8 +39,14 @@ rule emu_merge:
             # get file name
             barcode = os.path.basename(f).split("_")[0]
             table = pd.read_csv(f, sep="\t")
-            # combine "phylum", "class", "order", "family", "genus", "species" into "taxonomy"
-            table["taxonomy"] = table["phylum"] + ";" + table["class"] + ";" + table["order"] + ";" + table["family"] + ";" + table["genus"] + ";" + table["species"]
+            # combine "superkingdom", "phylum", "class", "order", "family", "genus", "species" into "taxonomy"
+            # if empty, skip
+            columns_to_combine = ["superkingdom", "phylum", "class", "order", "family", "genus", "species"]
+            # na to ""
+            table[columns_to_combine] = table[columns_to_combine].fillna("")
+            table["taxonomy"] = table[columns_to_combine].apply(lambda x: ";".join(x), axis=1)
+            # if tax_id is "unassigned", taxonomy is "unassigned"
+            table.loc[table["tax_id"] == "unassigned", "taxonomy"] = "unassigned"
             # only keep "tax_id", "estimated counts", "taxonomy"
             table = table[["tax_id", "taxonomy", "estimated counts"]]
             # use integer for "estimated counts"
