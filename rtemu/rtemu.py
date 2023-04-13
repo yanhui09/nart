@@ -76,7 +76,6 @@ def run_monitor(query, extension, workdir, timeout_seconds, output_file="fqs.txt
             if file.endswith(extension):
                 f.write(os.path.abspath(query + "/" + file) + "\n")                
     monitor_directory_for_new_files(query, extension, timeout_seconds, output_path)
-    exit(0)
  
 @click.group(context_settings=dict(help_option_names=['-h', '--help']))
 @click.version_option(
@@ -134,11 +133,25 @@ def monitor(query, extension, workdir, timeout):
     Start RT-Emu monitor.
     """
     run_monitor(query, extension, workdir, int(timeout)*60)
+    exit(0)
 
 # run
+def merge_table(out_table, otu_table):
+    # combine tables by "tax_id" and "taxonomy" if they are the same
+    out_table = pd.merge(out_table, otu_table, on=["tax_id", "taxonomy"], how="outer", suffixes=("", "_x")).fillna(0)
+    # add the values of "_x" to the original columns, and drop the "_x" columns
+    col_x = [col for col in out_table.columns if col.endswith("_x")]
+    for col in col_x:
+        # without "_x"
+        col_nox = col.replace("_x", "")
+        out_table[col_nox] = out_table[col_nox] + out_table[col]
+        out_table = out_table.drop(col, axis=1)
+    return out_table    
+
 def update_table(table_dir, out_table_path):
     ''''
-    merge all otu tables in the table_dir as one 
+    merge all otu tables in the table_dir as one;
+    update table when out_table is newer than the otu batch table
     '''
     # list all .tsv files in the table_dir
     otu_tables = os.listdir(table_dir)
@@ -146,24 +159,17 @@ def update_table(table_dir, out_table_path):
     # if the out_table exists, load it or create a new one
     if os.path.exists(out_table_path):
         out_table = pd.read_csv(out_table_path, sep="\t")
+        for otu_table in otu_tables:
+            # if the otu_table is newer than the out_table, update the out_table
+            if os.path.getmtime(otu_table) > os.path.getmtime(out_table_path):
+                otu_table = pd.read_csv(otu_table, sep="\t")
+                out_table = merge_table(out_table, otu_table)
     else:
-        out_table = pd.DataFrame()
-    # merge otu tables by the first two columns
-    for otu_table in otu_tables:
-        otu_table = pd.read_csv(otu_table, sep="\t")
-        if out_table.empty:
-            out_table = otu_table
-        else:
-            # combine tables by "tax_id" and "taxonomy" if they are the same
-            out_table = pd.merge(out_table, otu_table, on=["tax_id", "taxonomy"], how="outer", suffixes=("", "_x")).fillna(0)
-            # add the values of "_x" to the original columns, and drop the "_x" columns
-            col_x = [col for col in out_table.columns if col.endswith("_x")]
-            for col in col_x:
-                # without "_x"
-                col_nox = col.replace("_x", "")
-                out_table[col_nox] = out_table[col_nox] + out_table[col]
-                out_table = out_table.drop(col, axis=1)
-            
+        # merge all otu tables
+        out_table = pd.read_csv(otu_tables[0], sep="\t")
+        for otu_table in otu_tables[1:]:
+            otu_table = pd.read_csv(otu_table, sep="\t")
+            out_table = merge_table(out_table, otu_table)
     # fill the nan with 0
     out_table = out_table.fillna(0)
     # write otu_table to file; integer without decimal
