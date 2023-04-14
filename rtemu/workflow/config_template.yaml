@@ -25,7 +25,7 @@ minibar:
 nreads_m: 50 # rm barcoded samples in shallow sequencing
 ##############################################################
 # Quality control
-subsample: True
+subsample: False
 # filter reads by quality and length range
 seqkit:
   n: 5000 # subsampling number [int]
