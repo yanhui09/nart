@@ -8,6 +8,7 @@ from watchdog.events import FileSystemEventHandler
 import logging
 logging.getLogger("watchdog.observers.inotify_buffer").setLevel(logging.WARNING)
 import pandas as pd
+from .app import run_server
 
 def monitor_directory_for_new_files(directory_path, file_extension, timeout_seconds, output_file):
     """
@@ -282,6 +283,39 @@ def run(workdir, timeout, configfile, jobs, maxmem, profile, dryrun, snake_args)
     """
     run_rtemu(workdir + "/fqs.txt", timeout, "all", workdir, configfile, jobs, maxmem, profile, dryrun, snake_args)
     exit(0)
+
+# visual app
+@cli.command(
+    "visual",
+    context_settings=dict(ignore_unknown_options=True),
+    short_help='Start RT-Emu app to interactively visualize the results.'
+)
+@click.option(
+    '-p', 
+    '--port', 
+    type=int,
+    default=5000, 
+    show_default=True,
+    help='Port to run the app on.'
+    )
+@click.option(
+    '-i', 
+    '--input', 
+    type=click.Path(dir_okay=True,writable=True,resolve_path=True),
+    default='./otu_table.tsv', 
+    show_default=True,
+    help='Path to the input TSV file.'
+    )
+@click.option(
+    '-w', 
+    '--wait-time', 
+    type=int,
+    default=5, 
+    show_default=True,
+    help='Time to wait (in minutes) if input file is missing.'
+    )
+def run_app(port, input, wait_time):
+   run_server(port, input, wait_time) 
 
 if __name__ == "__main__":
     cli()

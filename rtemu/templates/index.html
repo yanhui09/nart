@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Plotly Demo</title>
+</head>
+<body>
+    <h1>Plotly Demo</h1>
+    <div id="plot"></div>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script>
+        function getPlot() {
+            Plotly.d3.json('/plot', function(err, fig) {
+                if (err) console.log(err);
+                Plotly.newPlot('plot', fig.data, fig.layout);
+            });
+        }
+        setInterval(getPlot, 1000);
+    </script>
+</body>
+</html>
