@@ -80,20 +80,5 @@ def run_server(port, input_file, wait_time):
     
     app.run(debug=False, port=port)
 
-    last_mod_time = os.stat(input_file).st_mtime
-    while True:
-        time.sleep(1)
-        if os.path.exists(input_file):
-            mod_time = os.stat(input_file).st_mtime
-            if mod_time > last_mod_time:
-                last_mod_time = mod_time
-                with app.app_context():
-                    plot_json = generate_plot(input_file)
-                    mod_time_str = get_modification_time(input_file)
-                    render_template('index.html', plot=plot_json, mod_time_str=mod_time_str)
-        else:
-            print(f"Input file '{input_file}' not found. Waiting for {wait_time} minute(s)...")
-            time.sleep(wait_time * 60)
-
 if __name__ == '__main__':
     run_server()

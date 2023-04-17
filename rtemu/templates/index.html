@@ -7,7 +7,7 @@
 <body>
   <div id="plot"></div>
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-  <p>Last updated: <span id="mod-time">{{ mod_time_str }}</span></p>
+  <p>Last updated: <span id="mod_time">{{ mod_time_str }}</span></p>
   <script>
     var plot_json = {{ plot_json | safe }};
     Plotly.newPlot('plot', plot_json);
@@ -27,7 +27,7 @@
         });
     }
 
-    setInterval(refreshPlot, 1000);
+    setInterval(refreshPlot, 10000);
   </script>
 </body>
 </html>
