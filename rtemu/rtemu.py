@@ -302,9 +302,9 @@ def run(workdir, timeout, configfile, jobs, maxmem, profile, dryrun, snake_args)
     '-i', 
     '--input', 
     type=click.Path(dir_okay=True,writable=True,resolve_path=True),
-    default='./otu_table.tsv', 
+    default='.', 
     show_default=True,
-    help='Path to the input TSV file.'
+    help='Path to the working directory.'
     )
 @click.option(
     '-w', 

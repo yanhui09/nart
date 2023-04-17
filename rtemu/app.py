@@ -48,27 +48,63 @@ def get_modification_time(input_file):
     mod_time_str = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(mod_time))
     return mod_time_str
 
+def get_num_files(input_dir, file_type):
+    """
+    Get the number of files in the input directory.
+    """
+    return len([f for f in os.listdir(input_dir) if f.endswith(file_type)])
+
+def get_latest_file(input_dir, file_type):
+    """
+    Get the latest file in the input directory.
+    """
+    files = [os.path.join(input_dir, f) for f in os.listdir(input_dir) if f.endswith(file_type)]
+    latest_file = max(files, key=os.path.getctime)
+    return latest_file
+
+def get_num_uniq_lines(input_file):
+    """
+    Get the number of unique lines in the input file.
+    """
+    with open(input_file) as f:
+        lines = f.readlines()
+    return len(set(lines))
+
 @app.route('/')
 def index():
     # use the file in /templates in rtemu package
     input_file = os.path.join(os.path.dirname(__file__), 'templates', 'input.tsv')
-    mod_time_str = get_modification_time(input_file)
+    #mod_time_str = get_modification_time(input_file)
+    mod_time_str = '0000-00-00 00:00:00'
     plot_json = generate_plot(input_file)
-    return render_template('index.html', plot_json=plot_json, mod_time_str=mod_time_str)
+    num_fqs = 0
+    num_batches = 0
+    latest_fq = '0000-00-00 00:00:00'
+    latest_batch = '0000-00-00 00:00:00'
+    pct_complete = 0
+    return render_template('index.html', 
+                           plot_json=plot_json, mod_time_str=mod_time_str,
+                           num_fqs=num_fqs, num_batches=num_batches, 
+                           latest_fq=latest_fq, latest_batch=latest_batch,
+                           pct_complete=pct_complete)
 
-def run_server(port, input_file, wait_time):
+def run_server(port, work_dir, wait_time):
     """
     Run the server.
     :param port: Port to run the app on.
-    :param input_file: Path to the input TSV file.
+    :param work_dir: Path to the work_dir.
     :param wait_time: Time to wait (in minutes) if input file is missing.
     """
+    input_file = os.path.join(work_dir, 'otu_table.tsv')
     if not os.path.exists(input_file):
         print(f"Input file '{input_file}' not found. Waiting for {wait_time} minute(s)...")
         time.sleep(wait_time * 60)
         if not os.path.exists(input_file):
             print("I'm waiting to be fed. ;)")
             return
+        
+    fq_txt = os.path.join(work_dir, 'fqs.txt')
+    batch_dir = os.path.join(work_dir, 'batches')
 
     @app.route('/plot')
     def plot():
@@ -77,6 +113,26 @@ def run_server(port, input_file, wait_time):
     @app.route('/mod_time')
     def mod_time():
         return get_modification_time(input_file)
+    
+    @app.route('/num_fqs')
+    def num_fqs():
+        return str(get_num_uniq_lines(fq_txt))
+    
+    @app.route('/latest_fq')
+    def latest_fq():
+        return get_modification_time(fq_txt)
+    
+    @app.route('/num_batches')
+    def num_batches():
+        return str(get_num_files(batch_dir, '.tsv'))
+    
+    @app.route('/latest_batch')
+    def latest_batch():
+        return str(get_modification_time(get_latest_file(batch_dir, '.tsv')))
+    
+    @app.route('/pct_complete')
+    def pct_complete():
+        return str(get_num_files(batch_dir, '.tsv') / get_num_uniq_lines(fq_txt) * 100)
     
     app.run(debug=False, port=port)
 

@@ -7,7 +7,10 @@
 <body>
   <div id="plot"></div>
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-  <p>Last updated: <span id="mod_time">{{ mod_time_str }}</span></p>
+  <p>Plot updated: <span id="mod_time">{{ mod_time_str }}</span></p>
+  <p>Nr. of basecall fastq files: <span id="num_fqs">{{ num_fqs }}</span> (updated: <span id="latest_fq">{{ latest_fq }}</span>)</p>
+  <p>Nr. of completed batches: <span id="num_batches">{{ num_batches }}</span> (updated: <span id="latest_batch">{{ latest_batch }}</span>)</p>
+  <p>Pct. of completed batches: <span id="pct_complete">{{ pct_complete }}&percnt;</p>
   <script>
     var plot_json = {{ plot_json | safe }};
     Plotly.newPlot('plot', plot_json);
@@ -24,6 +27,41 @@
         .then(function(modTimeStr) {
           var modTimeEl = document.getElementById('mod_time');
           modTimeEl.innerHTML = modTimeStr;
+        });
+      
+      fetch('/num_fqs')
+        .then(function(response) { return response.text(); })
+        .then(function(numFqs) {
+          var numFqsEl = document.getElementById('num_fqs');
+          numFqsEl.innerHTML = numFqs;
+        });
+
+      fetch('/latest_fq')
+        .then(function(response) { return response.text(); })
+        .then(function(latestFq) {
+          var latestFqEl = document.getElementById('latest_fq');
+          latestFqEl.innerHTML = latestFq;
+        });
+      
+      fetch('/num_batches')
+        .then(function(response) { return response.text(); })
+        .then(function(numBatches) {
+          var numBatchesEl = document.getElementById('num_batches');
+          numBatchesEl.innerHTML = numBatches;
+        });
+      
+      fetch('/latest_batch')
+        .then(function(response) { return response.text(); })
+        .then(function(latestBatch) {
+          var latestBatchEl = document.getElementById('latest_batch');
+          latestBatchEl.innerHTML = latestBatch;
+        });
+      
+      fetch('/pct_complete')
+        .then(function(response) { return response.text(); })
+        .then(function(pctComplete) {
+          var pctCompleteEl = document.getElementById('pct_complete');
+          pctCompleteEl.innerHTML = pctComplete;
         });
     }
 
