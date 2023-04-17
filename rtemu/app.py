@@ -5,6 +5,7 @@ import pandas as pd
 import plotly.graph_objs as go
 from flask import Flask, render_template
 
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 
@@ -39,41 +40,59 @@ def generate_plot(input_file):
     fig = go.Figure(data=data, layout=layout)
     return fig.to_json()
 
+def get_modification_time(input_file):
+    """
+    Get the last modification time of the input file.
+    """
+    mod_time = os.stat(input_file).st_mtime
+    mod_time_str = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(mod_time))
+    return mod_time_str
+
 @app.route('/')
 def index():
-    return render_template('index.html')
+    # use the file in /templates in rtemu package
+    input_file = os.path.join(os.path.dirname(__file__), 'templates', 'input.tsv')
+    mod_time_str = get_modification_time(input_file)
+    plot_json = generate_plot(input_file)
+    return render_template('index.html', plot_json=plot_json, mod_time_str=mod_time_str)
 
-def run_server(port, input, wait_time):
+def run_server(port, input_file, wait_time):
     """
     Run the server.
     :param port: Port to run the app on.
-    :param input: Path to the input TSV file.
+    :param input_file: Path to the input TSV file.
     :param wait_time: Time to wait (in minutes) if input file is missing.
     """
-    if not os.path.exists(input):
-        print(f"Input file '{input}' not found. Waiting for {wait_time} minute(s)...")
+    if not os.path.exists(input_file):
+        print(f"Input file '{input_file}' not found. Waiting for {wait_time} minute(s)...")
         time.sleep(wait_time * 60)
-        if not os.path.exists(input):
+        if not os.path.exists(input_file):
             print("I'm waiting to be fed. ;)")
             return
 
     @app.route('/plot')
     def plot():
-        return generate_plot(input)
-
+        return generate_plot(input_file)
+    
+    @app.route('/mod_time')
+    def mod_time():
+        return get_modification_time(input_file)
+    
     app.run(debug=False, port=port)
 
-    last_mod_time = os.stat(input).st_mtime
+    last_mod_time = os.stat(input_file).st_mtime
     while True:
         time.sleep(1)
-        if os.path.exists(input):
-            mod_time = os.stat(input).st_mtime
+        if os.path.exists(input_file):
+            mod_time = os.stat(input_file).st_mtime
             if mod_time > last_mod_time:
                 last_mod_time = mod_time
                 with app.app_context():
-                    generate_plot(input)
+                    plot_json = generate_plot(input_file)
+                    mod_time_str = get_modification_time(input_file)
+                    render_template('index.html', plot=plot_json, mod_time_str=mod_time_str)
         else:
-            print(f"Input file '{input}' not found. Waiting for {wait_time} minute(s)...")
+            print(f"Input file '{input_file}' not found. Waiting for {wait_time} minute(s)...")
             time.sleep(wait_time * 60)
 
 if __name__ == '__main__':
