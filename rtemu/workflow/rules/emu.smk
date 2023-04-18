@@ -29,6 +29,8 @@ rule emu_merge:
         demux_dir = "{batch}/demultiplexed",
         otutab = get_emu,
     output: "batches/{batch}.tsv"
+    params:
+        db = DATABASE_PREBUILT,
     resources:
         mem = config["mem"]["normal"],
     run:
@@ -39,12 +41,16 @@ rule emu_merge:
             # get file name
             barcode = os.path.basename(f).split("_")[0]
             table = pd.read_csv(f, sep="\t")
-            # combine "superkingdom", "phylum", "class", "order", "family", "genus", "species" into "taxonomy"
-            # if empty, skip
-            columns_to_combine = ["superkingdom", "phylum", "class", "order", "family", "genus", "species"]
-            # na to ""
-            table[columns_to_combine] = table[columns_to_combine].fillna("")
-            table["taxonomy"] = table[columns_to_combine].apply(lambda x: ";".join(x), axis=1)
+            if params.db == 'silva':
+                # siliva ouput one 'lineage' column
+                table = table.rename(columns={"lineage": "taxonomy"})
+            else:
+                # combine "superkingdom", "phylum", "class", "order", "family", "genus", "species" into "taxonomy"
+                # if empty, skip
+                columns_to_combine = ["superkingdom", "phylum", "class", "order", "family", "genus", "species"]
+                # na to ""
+                table[columns_to_combine] = table[columns_to_combine].fillna("")
+                table["taxonomy"] = table[columns_to_combine].apply(lambda x: ";".join(x), axis=1)
             # if tax_id is "unassigned", taxonomy is "unassigned"
             table.loc[table["tax_id"] == "unassigned", "taxonomy"] = "unassigned"
             # only keep "tax_id", "estimated counts", "taxonomy"
