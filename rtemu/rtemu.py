@@ -314,8 +314,22 @@ def run(workdir, timeout, configfile, jobs, maxmem, profile, dryrun, snake_args)
     show_default=True,
     help='Time to wait (in minutes) if input file is missing.'
     )
-def run_app(port, input, wait_time):
-   run_server(port, input, wait_time) 
+@click.option(
+    "--relative",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Use relative abundance instead of absolute abundance.",
+)
+@click.option(
+    "--rm-unmapped",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Remove unmapped reads from the table.",
+)
+def run_app(port, input, wait_time, relative, rm_unmapped):
+   run_server(port, input, wait_time, relative, rm_unmapped) 
 
 if __name__ == "__main__":
     cli()

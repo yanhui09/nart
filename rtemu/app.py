@@ -9,8 +9,15 @@ from flask import Flask, render_template
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 
-def generate_plot(input_file):
+def generate_plot(input_file, relative=False, rm_unmapped=False):
     df = pd.read_csv(input_file, sep='\t', index_col=0)
+    if rm_unmapped:
+        if 'unassigned' in df.index:
+            df = df.drop('unassigned')
+    # transform to relative abundance % if specified
+    if relative:
+        df[df.columns[1:]] = df[df.columns[1:]].div(df[df.columns[1:]].sum(axis=0)) * 100
+     
     sample_names = df.columns.tolist()[1:]
 
     # Get a list of all unique taxa in the dataframe
@@ -76,7 +83,7 @@ def index():
     input_file = os.path.join(os.path.dirname(__file__), 'templates', 'input.tsv')
     #mod_time_str = get_modification_time(input_file)
     mod_time_str = '0000-00-00 00:00:00'
-    plot_json = generate_plot(input_file)
+    plot_json = generate_plot(input_file, relative=False, rm_unmapped=False)
     num_fqs = 0
     num_batches = 0
     latest_fq = '0000-00-00 00:00:00'
@@ -88,12 +95,14 @@ def index():
                            latest_fq=latest_fq, latest_batch=latest_batch,
                            pct_complete=pct_complete)
 
-def run_server(port, work_dir, wait_time):
+def run_server(port, work_dir, wait_time, relative, rm_unmapped):
     """
     Run the server.
     :param port: Port to run the app on.
     :param work_dir: Path to the work_dir.
     :param wait_time: Time to wait (in minutes) if input file is missing.
+    :param relative: Whether to plot in relative abundance.
+    :param rm_mapped: Whether to remove unmapped reads.
     """
     input_file = os.path.join(work_dir, 'otu_table.tsv')
     if not os.path.exists(input_file):
@@ -108,7 +117,7 @@ def run_server(port, work_dir, wait_time):
 
     @app.route('/plot')
     def plot():
-        return generate_plot(input_file)
+        return generate_plot(input_file, relative, rm_unmapped)
     
     @app.route('/mod_time')
     def mod_time():
