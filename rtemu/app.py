@@ -12,14 +12,11 @@ app.config['SECRET_KEY'] = 'secret!'
 def generate_plot(input_file, relative=False, rm_unmapped=False):
     df = pd.read_csv(input_file, sep='\t', index_col=0)
     if rm_unmapped:
-        if 'unassigned' in df.index:
-            df = df.drop('unassigned')
-    # transform to relative abundance % if specified
+        df = df.drop('unassigned', axis=0, errors='ignore')
     if relative:
         df[df.columns[1:]] = df[df.columns[1:]].div(df[df.columns[1:]].sum(axis=0)) * 100
      
     sample_names = df.columns.tolist()[1:]
-
     # Get a list of all unique taxa in the dataframe
     taxa = df['taxonomy'].unique()
 
@@ -102,9 +99,12 @@ def run_server(port, work_dir, wait_time, relative, rm_unmapped):
     :param work_dir: Path to the work_dir.
     :param wait_time: Time to wait (in minutes) if input file is missing.
     :param relative: Whether to plot in relative abundance.
-    :param rm_mapped: Whether to remove unmapped reads.
+    :param rm_unmapped: Whether to remove unmapped reads.
     """
     input_file = os.path.join(work_dir, 'otu_table.tsv')
+    fq_txt = os.path.join(work_dir, 'fqs.txt')
+    batch_dir = os.path.join(work_dir, 'batches')
+
     if not os.path.exists(input_file):
         print(f"Input file '{input_file}' not found. Waiting for {wait_time} minute(s)...")
         time.sleep(wait_time * 60)
@@ -112,9 +112,6 @@ def run_server(port, work_dir, wait_time, relative, rm_unmapped):
             print("I'm waiting to be fed. ;)")
             return
         
-    fq_txt = os.path.join(work_dir, 'fqs.txt')
-    batch_dir = os.path.join(work_dir, 'batches')
-
     @app.route('/plot')
     def plot():
         return generate_plot(input_file, relative, rm_unmapped)
