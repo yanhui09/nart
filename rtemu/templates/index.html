@@ -9,8 +9,8 @@
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
   <p>Plot updated: <span id="mod_time">{{ mod_time_str }}</span></p>
   <p>Nr. of basecall fastq files: <span id="num_fqs">{{ num_fqs }}</span> (updated: <span id="latest_fq">{{ latest_fq }}</span>)</p>
-  <p>Nr. of completed batches: <span id="num_batches">{{ num_batches }}</span> (updated: <span id="latest_batch">{{ latest_batch }}</span>)</p>
-  <p>Pct. of completed batches: <span id="pct_complete">{{ pct_complete }}&percnt;</p>
+  <p>Nr. of profile batches: <span id="num_batches">{{ num_batches }}</span> (updated: <span id="latest_batch">{{ latest_batch }}</span>)</p>
+  <p>Pct. of completeness: <span id="pct_complete">{{ pct_complete }}</p>
   <script>
     var plot_json = {{ plot_json | safe }};
     Plotly.newPlot('plot', plot_json);
