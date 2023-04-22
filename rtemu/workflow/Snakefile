@@ -1,8 +1,10 @@
 #--------------
 configfile: "config.yaml"
 #--------------
-DATABASE_DIR = config["database_dir"].rstrip("/")
+# absolute path
+DATABASE_DIR = os.path.abspath(config["database_dir"].rstrip("/"))
 DATABASE_PREBUILT = config["emu"]["prebuilt_database"]
+CLASSIFIER = config["classifier"]
 # use basecall_fq file basename or demux dirname as batch dir
 def get_batch_dir(basc_fq = config["basecall_fq"], demux_dir = config["demultiplex_dir"]):
     # only and at least one is allowed
@@ -34,12 +36,12 @@ def check_list_ele(var, val, eles):
 
 localrules: all, demux, qc
 rule all:
-    input: "batches/{}.tsv".format(BATCH_ID)
+    input: "batches/{}_{}.tsv".format(CLASSIFIER, BATCH_ID)
 
 include: "rules/init.smk"
 include: "rules/demux.smk"
 include: "rules/qc.smk"
-include: "rules/emu.smk"
+include: "rules/profile.smk"
 
 rule demux:
     input: lambda wc: expand("qc/{barcode}.fastq", barcode=get_demux_barcodes(wc))

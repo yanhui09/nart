@@ -60,7 +60,7 @@ def run_smk(workflow, workdir, configfile, jobs, maxmem, profile, dryrun, snake_
     if not suppress:
         logger.info(f"RT-Emu version: {__version__}")
     if not os.path.exists(configfile):
-        logger.critical(f"Workflow config file not found: {configfile}\nGenerate a config file using 'workflow config'")
+        logger.critical(f"Workflow config file not found: {configfile}\nGenerate a config file using 'emuwf config'")
         exit(1)
     
     conf = load_configfile(configfile)
@@ -301,6 +301,13 @@ def run_workflow(workflow, workdir, configfile, jobs, maxmem, profile, dryrun, s
     help="Do not trim the primers.",
 )
 @click.option(
+    "--classifier",
+    type=click.Choice(["emu", "minimap2lca"]),
+    default="minimap2lca",
+    show_default=True,
+    help="Classifier.",
+)
+@click.option(
     "--jobs-min",
     type=int,
     default=2,
@@ -316,14 +323,14 @@ def run_workflow(workflow, workdir, configfile, jobs, maxmem, profile, dryrun, s
 )
 def config_workflow(
     bascfq, demuxdir, dbdir, workdir, demuxer, fqs_min, subsample, no_trim, 
-    jobs_min, jobs_max):
+    classifier, jobs_min, jobs_max):
     """
     Config RT-Emu workflow.
     """ 
     logger.info(f"RT-Emu version: {__version__}")
     init_conf(
         bascfq, demuxdir, dbdir, workdir, "config.yaml", demuxer, fqs_min, subsample,
-        no_trim, jobs_min, jobs_max)
+        no_trim, classifier, jobs_min, jobs_max)
    
 if __name__ == "__main__":
     cli()

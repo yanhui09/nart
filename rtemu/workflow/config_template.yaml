@@ -49,6 +49,18 @@ cutadapt:
   max_errors: 0.2
   min_overlap: 6
 
+classifier: minimap2lca # emu|minimap2lca
+
+minimap2lca:
+  # megan lca params
+  maxMatchesPerRead: 100
+  topPercent: 10
+  minSupportPercent: 0.01
+  minPercentReadCover: 70
+  minPercentReferenceCover: 0
+  lcaAlgorithm: naive # naive|weighted|longReads 
+  lcaCoveragePercent: 100
+
 emu:
   # emu|rdp|silva|unite-fungi|unite-all
   prebuilt_database: emu

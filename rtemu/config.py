@@ -13,6 +13,7 @@ def init_conf(
     nreads_m = 1000,
     subsample=False,
     no_trim=False,
+    classifier="minimap2lca",
     jobs_m=2,
     jobs_M=6,
 ):
@@ -29,6 +30,7 @@ def init_conf(
         nreads_m (int): minimum number of reads for the demultiplexed fastqs
         subsample (bool): if True, subsample the reads [default: False]
         no_trim (bool): if True, do not trim the primers [default: False]
+        minimap2lca (str): the classifier [default: "minimap2lca"]
         jobs_m (int): number of jobs for common tasks [default: 2]
         jobs_M (int): number of jobs for threads-dependent tasks [default: 6]
    """
@@ -48,6 +50,7 @@ def init_conf(
     conf["nreads_m"] = nreads_m
     conf["subsample"] = subsample
     conf["trim"] = not no_trim
+    conf["classifier"] = classifier
     conf["threads"]["normal"] = jobs_m
     conf["threads"]["large"] = jobs_M
     
