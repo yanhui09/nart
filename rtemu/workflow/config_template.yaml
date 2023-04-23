@@ -33,6 +33,12 @@ seqkit:
   min_len: 800
   max_len: 1500
 
+# rm chimeras
+rm_chimera: True
+yacrd:
+  c: 4
+  n: 0.4
+
 # trim primers
 trim: True
 # order matters
@@ -49,8 +55,8 @@ cutadapt:
   max_errors: 0.2
   min_overlap: 6
 
+##############################################################
 classifier: minimap2lca # emu|minimap2lca
-
 minimap2lca:
   # megan lca params
   maxMatchesPerRead: 100

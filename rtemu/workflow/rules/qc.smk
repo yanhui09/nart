@@ -50,9 +50,50 @@ def get_raw(subsample = config["subsample"], n = config["seqkit"]["n"]):
     else:
         return rules.collect_fastq.output
 
+# run yacrd to rm chimeras first so as to allow adequate coverage for ava
+rule minimap2ava:
+    input: get_raw()
+    output: temp("{batch}/qc/yacrd/{barcode}.paf")
+    conda: "../envs/yacrd.yaml"
+    params:
+        x = "ava-ont",
+        g = 500,
+        f = 1000,
+    log: "logs/qc/yacrd/{barcode}_{batch}_ava.log"
+    benchmark: "benchmarks/qc/yacrd/{barcode}_{batch}_ava.txt"
+    threads: config["threads"]["large"]
+    resources:
+        mem = config["mem"]["large"],
+        time = config["runtime"]["simple"],
+    shell: "minimap2 -x {params.x} -g {params.g} -f {params.f} -t {threads} {input} {input} > {output} 2> {log}"
+
+rule yacrd:
+    input: 
+        fq = get_raw(),
+        ava = rules.minimap2ava.output
+    output: temp("{batch}/qc/yacrd/{barcode}.fastq")
+    conda: "../envs/yacrd.yaml"
+    params:
+        c = config["yacrd"]["c"],
+        n = config["yacrd"]["n"],
+    log: "logs/qc/yacrd/{barcode}_{batch}_scrubb.log"
+    benchmark: "benchmarks/qc/yacrd/{barcode}_{batch}_scrubb.txt"
+    threads: config["threads"]["large"]
+    resources:
+        mem = config["mem"]["large"],
+        time = config["runtime"]["simple"],
+    shell: "yacrd -i {input.ava} -o {log} -c {params.c} -n {params.n} -t {threads} scrubb -i {input.fq} -o {output} 2>> {log}"
+
+def get_chimera_free(rm_chimera= config["rm_chimera"]):
+    check_val("rm_chimera", rm_chimera, bool)
+    if rm_chimera is True:
+        return rules.yacrd.output
+    else:
+        return get_raw()
+
 # trim primers, process two strands differently
 rule trim_primers:
-    input: get_raw()
+    input: get_chimera_free()
     output: 
         trimmed = temp("{batch}/qc/primers_trimmed/{barcode}F.fastq"),
         untrimmed = temp("{batch}/qc/primers_untrimmed/{barcode}F.fastq"),
