@@ -56,8 +56,8 @@ cutadapt:
   min_overlap: 6
 
 ##############################################################
-classifier: minimap2lca # emu|minimap2lca
-minimap2lca:
+classifier: minimap2lca # emu|minimap2lca|blast2lca
+lca:
   # megan lca params
   maxMatchesPerRead: 100
   topPercent: 10

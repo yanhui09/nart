@@ -6,6 +6,16 @@ def init_db(db=CLASSIFIER):
         return expand(DATABASE_DIR + "/emu/" + DATABASE_PREBUILT + "_prebuilt/{file}", file = ["species_taxid.fasta", "taxonomy.tsv"])
     elif db == "minimap2lca":
         return expand(DATABASE_DIR + "/silva/{file}", file = ["SILVA_ssu_nr99_filt.mmi", "silva_to_ncbi.map"])
+    elif db == "blast2lca":
+        return multiext(DATABASE_DIR + "/silva/SILVA_ssu_nr99_filt.fasta", 
+            ".ndb",
+            ".nhr",
+            ".nin",
+            ".not",
+            ".nsq",
+            ".ntf",
+            ".nto"
+            ), DATABASE_DIR + "/silva/silva_to_ncbi.map"
     else:
         raise ValueError("Classifier not supported")
 
@@ -39,7 +49,7 @@ rule download_silva:
     output:
         temp(expand(DATABASE_DIR + "/silva/{file}", file = ["SILVA_ssu_nr99_full.fasta", "tax_ncbi-species_nr99.txt", "taxmap_ssu_ref_nr99.txt"]))
     message: "Downloading the Silva database"
-    conda: "../envs/minimap2lca.yaml"
+    conda: "../envs/lca.yaml"
     params:
         database_dir = DATABASE_DIR,
         silvaFastaURL = "https://www.arb-silva.de/fileadmin/silva_databases/current/Exports/SILVA_138.1_SSURef_NR99_tax_silva.fasta.gz",
@@ -70,7 +80,7 @@ rule filt_silva:
     input: DATABASE_DIR + "/silva/SILVA_ssu_nr99_full.fasta"
     output: DATABASE_DIR + "/silva/SILVA_ssu_nr99_filt.fasta"
     message: "Filtering the Silva database"
-    conda: "../envs/minimap2lca.yaml"
+    conda: "../envs/lca.yaml"
     log: "logs/taxonomy/silva/filt.log"
     benchmark: "benchmarks/taxonomy/silva/filt.txt"
     resources:
@@ -82,10 +92,10 @@ rule filt_silva:
         """
 
 rule minimap2silva_db:
-    input: DATABASE_DIR + "/silva/SILVA_ssu_nr99_filt.fasta"
+    input: rules.filt_silva.output
     output: DATABASE_DIR + "/silva/SILVA_ssu_nr99_filt.mmi"
     message: "Building the minimap2 database with SILVA reference"
-    conda: "../envs/minimap2lca.yaml"
+    conda: "../envs/lca.yaml"
     params:
         k = 15,
     log: "logs/taxonomy/silva/minimap2_db.log"
@@ -105,7 +115,7 @@ rule silva2ncbi_map:
         taxmap = DATABASE_DIR + "/silva/taxmap_ssu_ref_nr99.txt"
     output: DATABASE_DIR + "/silva/silva_to_ncbi.map"
     message: "Generating the Silva to NCBI synonyms map"
-    conda: "../envs/minimap2lca.yaml"
+    conda: "../envs/lca.yaml"
     log: "logs/taxonomy/silva/silva_to_ncbi_map.log"
     benchmark: "benchmarks/taxonomy/silva/silva_to_ncbi_map.txt"
     resources:
@@ -118,3 +128,24 @@ rule silva2ncbi_map:
 		--taxmap  {input.taxmap} \
 		--out {output} 1> {log} 2>&1
         """
+
+rule blast_db:
+    input: rules.filt_silva.output
+    output: 
+        multiext(DATABASE_DIR + "/silva/SILVA_ssu_nr99_filt.fasta",
+            ".ndb",
+            ".nhr",
+            ".nin",
+            ".not",
+            ".nsq",
+            ".ntf",
+            ".nto"
+            )
+    message: "Building the blast database with SILVA reference"
+    conda: "../envs/lca.yaml"
+    log: "logs/taxonomy/silva/blast_db.log"
+    benchmark: "benchmarks/taxonomy/silva/blast_db.txt"
+    resources:
+        mem = config["mem"]["normal"],
+        time = config["runtime"]["simple"],
+    shell: "makeblastdb -in {input} -dbtype nucl 1> {log} 2>&1" 

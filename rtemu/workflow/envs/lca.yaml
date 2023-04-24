@@ -1,3 +1,4 @@
+name: lca
 channels:
   - conda-forge
   - bioconda
@@ -8,4 +9,5 @@ dependencies:
   - r-base
   - r-optparse
   - samtools
+  - blast
   - megan
