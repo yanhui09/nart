@@ -29,7 +29,7 @@ subsample: False
 # filter reads by quality and length range
 seqkit:
   n: 5000 # subsampling number [int]
-  min_qual: 7
+  min_qual: 10
   min_len: 800
   max_len: 1500
 
@@ -40,7 +40,7 @@ yacrd:
   n: 0.4
 
 # trim primers
-trim: True
+trim: False
 # order matters
 fprimer:
   27Fa: "AGAGTTTGATYMTGGCTYAG"
@@ -56,13 +56,13 @@ cutadapt:
   min_overlap: 6
 
 ##############################################################
-classifier: minimap2lca # emu|minimap2lca|blast2lca
+classifier: emu # emu|minimap2lca|blast2lca
 lca:
   # megan lca params
   maxMatchesPerRead: 100
   topPercent: 10
   minSupportPercent: 0.01
-  minPercentReadCover: 70
+  minPercentReadCover: 90
   minPercentReferenceCover: 0
   lcaAlgorithm: naive # naive|weighted|longReads 
   lcaCoveragePercent: 100

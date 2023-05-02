@@ -77,12 +77,16 @@ rule minimap2:
     input:
         mmi = rules.minimap2silva_db.output,
         fq = rules.q_filter.output,
-    output: temp("{batch}/minimap2lca/{barcode}.sam")
+    output: 
+        sam4 = temp("{batch}/minimap2lca/{barcode}.sam4"),
+        sam = temp("{batch}/minimap2lca/{barcode}.sam")
     conda: "../envs/lca.yaml"
     params:
         K = '500M',
         x = 'map-ont',
         f = 10000,
+        # https://lh3.github.io/minimap2/minimap2.html#10
+        max_de = 0.1,
     resources:
         mem = config["mem"]["normal"],
         time = config["runtime"]["default"],
@@ -91,13 +95,15 @@ rule minimap2:
     threads: config["threads"]["large"]
     shell:
         """
-        minimap2 -t {threads} -K {params.K} -ax {params.x} -f {params.f} --secondary=no {input.mmi} {input.fq} > {output} 2> {log}
+        minimap2 -t {threads} -K {params.K} -ax {params.x} -f {params.f} --secondary=no {input.mmi} {input.fq} > {output.sam4} 2> {log}
+        grep "^@" {output.sam4} > {output.sam}
+        grep -v "^@" {output.sam4} | awk -F '\t|de:f:' '$(NF-1) < {params.max_de}' >> {output.sam} 2>> {log}
         """
 
 rule minimap2rma:
     input:
         fq = rules.q_filter.output,
-        sam = rules.minimap2.output,
+        sam = rules.minimap2.output.sam,
         silva2ncbi_map = rules.silva2ncbi_map.output,
     output: temp("{batch}/minimap2lca/{barcode}.rma")
     conda: "../envs/lca.yaml"
@@ -205,35 +211,6 @@ rule blast2rma:
         -s2t {input.silva2ncbi_map} > {log} 2>&1
         """
 
-#rule get_read_info:
-#    input: rules.megan_lca.output
-#    output: 
-#        ncbi = temp("{batch}/minimap2lca/{barcode}.ncbi"),
-#        path = temp("{batch}/minimap2lca/{barcode}.path"),
-#        ri = temp("{batch}/minimap2lca/{barcode}.ri"),
-#    conda: "../envs/lca.yaml"
-#    resources:
-#        mem = config["mem"]["normal"],
-#        time = config["runtime"]["default"],
-#    log: "logs/minimap2lca/{barcode}_{batch}_readinfo.log"
-#    benchmark: "benchmarks/minimap2lca/{barcode}_{batch}_readinfo.txt"
-#    shell:
-#        """
-#        rma2info \
-#        -i {input} \
-#        -r2c Taxonomy \
-#        -n -r -mro \
-#        -o {output.path} > {log} 2>&1
-#        rma2info \
-#        -i {input} \
-#        -r2c Taxonomy \
-#        -p -mro \
-#        -o {output.ncbi} >> {log} 2>&1
-#        join -t $'\\t' \
-#        <(sort {output.ncbi}) \
-#        <(sort {output.path}) \
-#        > {output.ri}
-#        """
 wildcard_constraints:
     classifier = '|'.join(["minimap2lca", "blast2lca"])
 

@@ -12,7 +12,8 @@ app.config['SECRET_KEY'] = 'secret!'
 def generate_plot(input_file, relative=False, rm_unmapped=False):
     df = pd.read_csv(input_file, sep='\t', index_col=0)
     if rm_unmapped:
-        df = df.drop('unassigned', axis=0, errors='ignore')
+        # taxonomy column equals "unassigned", remove it
+        df  = df[df['taxonomy'] != 'unassigned']
     if relative:
         df[df.columns[1:]] = df[df.columns[1:]].div(df[df.columns[1:]].sum(axis=0)) * 100
      
