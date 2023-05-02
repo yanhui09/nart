@@ -9,11 +9,13 @@ from flask import Flask, render_template
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 
-def generate_plot(input_file, relative=False, rm_unmapped=False):
+def generate_plot(input_file, relative=False, rm_unmapped=False, min_abs_abun=1):
     df = pd.read_csv(input_file, sep='\t', index_col=0)
     if rm_unmapped:
         # taxonomy column equals "unassigned", remove it
         df  = df[df['taxonomy'] != 'unassigned']
+    if min_abs_abun > 0:
+        df = df[df[df.columns[1:]].max(axis=1) >= min_abs_abun]
     if relative:
         df[df.columns[1:]] = df[df.columns[1:]].div(df[df.columns[1:]].sum(axis=0)) * 100
      
@@ -81,7 +83,7 @@ def index():
     input_file = os.path.join(os.path.dirname(__file__), 'templates', 'input.tsv')
     #mod_time_str = get_modification_time(input_file)
     mod_time_str = '0000-00-00 00:00:00'
-    plot_json = generate_plot(input_file, relative=False, rm_unmapped=False)
+    plot_json = generate_plot(input_file, relative=False, rm_unmapped=False, min_abs_abun=1)
     num_fqs = 0
     num_batches = 0
     latest_fq = '0000-00-00 00:00:00'
@@ -93,7 +95,7 @@ def index():
                            latest_fq=latest_fq, latest_batch=latest_batch,
                            pct_complete=pct_complete)
 
-def run_server(port, work_dir, wait_time, relative, rm_unmapped):
+def run_server(port, work_dir, wait_time, relative, rm_unmapped, min_abs_abun):
     """
     Run the server.
     :param port: Port to run the app on.
@@ -101,6 +103,7 @@ def run_server(port, work_dir, wait_time, relative, rm_unmapped):
     :param wait_time: Time to wait (in minutes) if input file is missing.
     :param relative: Whether to plot in relative abundance.
     :param rm_unmapped: Whether to remove unmapped reads.
+    :param min_abs_abun: Minimum absolute abundance to plot.
     """
     input_file = os.path.join(work_dir, 'otu_table.tsv')
     fq_txt = os.path.join(work_dir, 'fqs.txt')
@@ -115,7 +118,7 @@ def run_server(port, work_dir, wait_time, relative, rm_unmapped):
         
     @app.route('/plot')
     def plot():
-        return generate_plot(input_file, relative, rm_unmapped)
+        return generate_plot(input_file, relative, rm_unmapped, min_abs_abun)
     
     @app.route('/mod_time')
     def mod_time():

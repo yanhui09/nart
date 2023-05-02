@@ -328,8 +328,15 @@ def run(workdir, timeout, configfile, jobs, maxmem, profile, dryrun, snake_args)
     show_default=True,
     help="Remove unmapped reads from the table.",
 )
-def run_app(port, input, wait_time, relative, rm_unmapped):
-   run_server(port, input, wait_time, relative, rm_unmapped) 
+@click.option(
+    '--min-abundance', 
+    type=int,
+    default=1, 
+    show_default=True,
+    help='Minimum absolute abundance of a feature to plot.'
+    )
+def run_app(port, input, wait_time, relative, rm_unmapped, min_abundance):
+   run_server(port, input, wait_time, relative, rm_unmapped, min_abundance) 
 
 if __name__ == "__main__":
     cli()
