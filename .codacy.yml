@@ -1,6 +1,6 @@
 ---
 exclude_paths:
-  - 'rtemu/_version.py'
+  - 'nart/_version.py'
   - 'tests/**/*'
   - 'tests/*'
   - 'benchmarks/**/*'

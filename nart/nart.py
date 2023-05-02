@@ -55,8 +55,8 @@ def monitor_directory_for_new_files(directory_path, file_extension, timeout_seco
         observer.stop()
     observer.join()
 
-# rtemu monitor
-# minoitor the new fqs in a folder, update the fqs.txt and run the emuwf
+# nart monitor
+# minoitor the new fqs in a folder, update the fqs.txt and run the nartwf
 # to do --visual render a html report
 def run_monitor(query, extension, workdir, timeout_seconds, output_file="fqs.txt"):
     # check if the query is a directory
@@ -87,8 +87,8 @@ def run_monitor(query, extension, workdir, timeout_seconds, output_file="fqs.txt
 @click.pass_context
 def cli(self):
     """
-    RT-Emu: Real-time ONT amplicon workflow with Emu.
-    To follow updates and report issues, see: https://github.com/yanhui09/rtemu.
+    NART: A tool for Nanopore Amplicon Real-Time (NART) analysis.
+    To follow updates and report issues, see: https://github.com/yanhui09/nart.
     """
     pass
 
@@ -96,7 +96,7 @@ def cli(self):
 @cli.command(
     "monitor",
     context_settings=dict(ignore_unknown_options=True),
-    short_help='Start RT-Emu to monitor a directory.'
+    short_help='Start NART to monitor a directory.'
 )
 @click.option(
     "-q",
@@ -131,7 +131,7 @@ def cli(self):
 )
 def monitor(query, extension, workdir, timeout):
     """
-    Start RT-Emu monitor.
+    Start NART monitor.
     """
     run_monitor(query, extension, workdir, int(timeout)*60)
     exit(0)
@@ -176,7 +176,7 @@ def update_table(table_dir, out_table_path):
     # write otu_table to file; integer without decimal
     out_table.to_csv(out_table_path, sep="\t", index=False, float_format="%.0f")
     
-def run_rtemu(file_list, wait_minutes, workflow, workdir, configfile, jobs, maxmem, profile, dryrun, snake_args):
+def run_nart(file_list, wait_minutes, workflow, workdir, configfile, jobs, maxmem, profile, dryrun, snake_args):
     # check if the workdir
     if not os.path.exists(workdir):
         raise ValueError("The workdir does not exist.")
@@ -222,7 +222,7 @@ def run_rtemu(file_list, wait_minutes, workflow, workdir, configfile, jobs, maxm
 @cli.command(
     "run",
     context_settings=dict(ignore_unknown_options=True),
-    short_help='Start RT-Emu workflow.'
+    short_help='Start NART workflow.'
 )
 @click.option(
     "-w",
@@ -279,16 +279,16 @@ def run_rtemu(file_list, wait_minutes, workflow, workdir, configfile, jobs, maxm
 @click.argument("snake_args", nargs=-1, type=click.UNPROCESSED)
 def run(workdir, timeout, configfile, jobs, maxmem, profile, dryrun, snake_args):
     """
-    Start RT-Emu.
+    Start NART.
     """
-    run_rtemu(workdir + "/fqs.txt", timeout, "all", workdir, configfile, jobs, maxmem, profile, dryrun, snake_args)
+    run_nart(workdir + "/fqs.txt", timeout, "all", workdir, configfile, jobs, maxmem, profile, dryrun, snake_args)
     exit(0)
 
 # visual app
 @cli.command(
     "visual",
     context_settings=dict(ignore_unknown_options=True),
-    short_help='Start RT-Emu app to interactively visualize the results.'
+    short_help='Start NART app to interactively visualize the results.'
 )
 @click.option(
     '-p', 

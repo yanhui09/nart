@@ -54,13 +54,13 @@ def get_snakefile(file="workflow/Snakefile"):
 
 def run_smk(workflow, workdir, configfile, jobs, maxmem, profile, dryrun, snake_args, snakefile, exit_on_error, suppress):
     """
-    Start RT-Emu workflow in a single batch.
+    Start NAWF in a single batch.
     Most snakemake arguments can be appended, for more info see 'snakemake --help'
     """
     if not suppress:
-        logger.info(f"RT-Emu version: {__version__}")
+        logger.info(f"NAWF version: {__version__}")
     if not os.path.exists(configfile):
-        logger.critical(f"Workflow config file not found: {configfile}\nGenerate a config file using 'emuwf config'")
+        logger.critical(f"Workflow config file not found: {configfile}\nGenerate a config file using 'nawf config'")
         exit(1)
     
     conf = load_configfile(configfile)
@@ -159,10 +159,10 @@ class AloMutex(click.Option):
 @click.pass_context
 def cli(self):
     """
-    RT-Emu: Real-time ONT amplicon workflow with Emu.
-    The workflow command initiates the RT-Emu workflow in a single batch,
+    NAWF: A sub-tool to run Nanopore Amplicon WorkFlow.
+    The workflow command initiates the NAWF in a single batch,
     using either a fastq file from one ONT run or a fastq file generated during sequencing.
-    To follow updates and report issues, see: https://github.com/yanhui09/rtemu.
+    To follow updates and report issues, see: https://github.com/yanhui09/nart.
     """
     pass
 
@@ -225,7 +225,7 @@ def cli(self):
 @click.argument("snake_args", nargs=-1, type=click.UNPROCESSED)
 def run_workflow(workflow, workdir, configfile, jobs, maxmem, profile, dryrun, snake_args):
     """
-    Run RT-Emu workflow in a single batch.
+    Run NAWF in a single batch.
     """
     sf = "workflow/Snakefile" 
     snakefile = get_snakefile(sf)
@@ -268,7 +268,7 @@ def run_workflow(workflow, workdir, configfile, jobs, maxmem, profile, dryrun, s
     "-w",
     "--workdir",
     type=click.Path(dir_okay=True, writable=True, resolve_path=True),
-    help="Output directory for RT-Emu.",
+    help="Output directory for NAWF.",
     show_default=True,
     default=".",
 )
@@ -302,8 +302,8 @@ def run_workflow(workflow, workdir, configfile, jobs, maxmem, profile, dryrun, s
 )
 @click.option(
     "--classifier",
-    type=click.Choice(["emu", "minimap2lca"]),
-    default="minimap2lca",
+    type=click.Choice(["emu", "minimap2lca", "blast2lca"]),
+    default="emu",
     show_default=True,
     help="Classifier.",
 )
@@ -325,9 +325,9 @@ def config_workflow(
     bascfq, demuxdir, dbdir, workdir, demuxer, fqs_min, subsample, no_trim, 
     classifier, jobs_min, jobs_max):
     """
-    Config RT-Emu workflow.
+    Config NAWF.
     """ 
-    logger.info(f"RT-Emu version: {__version__}")
+    logger.info(f"NAWF version: {__version__}")
     init_conf(
         bascfq, demuxdir, dbdir, workdir, "config.yaml", demuxer, fqs_min, subsample,
         no_trim, classifier, jobs_min, jobs_max)
