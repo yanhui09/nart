@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches_ignore: []
+
+jobs:
+  Formatting:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Formatting
+        uses: github/super-linter@v4
+        env:
+          VALIDATE_ALL_CODEBASE: false
+          DEFAULT_BRANCH: main
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VALIDATE_SNAKEMAKE_SNAKEFMT: true
+
+  Testing:
+    runs-on: ubuntu-latest
+    needs: Formatting
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0 # we need tags for versioneer to work
+
+      - name: Setup NART environment
+        run: |
+          wget -O Mambaforge.sh https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Linux-x86_64.sh --quiet
+          bash Mambaforge.sh -b -p "${HOME}/conda"
+          source "${HOME}/conda/etc/profile.d/conda.sh"
+          source "${HOME}/conda/etc/profile.d/mamba.sh"
+          # ensure that mamba is happy to write into the cache
+          sudo chown -R runner:docker "${HOME}/conda/pkgs/cache"
+          conda config --set channel_priority flexible
+          mamba env create -q --name nart --file env.yaml
+      
+      - name: Install NART
+        run: |
+          export PATH="${HOME}/conda/bin:$PATH"
+          source activate nart
+          pip install --editable .
+          nawf -h
+          nawf config -h
+          nawf run -h
+          nart -h
+          nart monitor -h
+          nart run -h
+          nart visual -h
+
+      - name: Dry-run NAWF
+        run: |
+          export PATH="${HOME}/conda/bin:$PATH"
+          source activate nart
+          nawf config -b nart/workflow/resouces/data/raw.fastq.gz -d test/Database -w test
+          nawf run all -w test -n
