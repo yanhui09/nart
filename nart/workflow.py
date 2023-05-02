@@ -294,11 +294,11 @@ def run_workflow(workflow, workdir, configfile, jobs, maxmem, profile, dryrun, s
     help="Subsample the reads.",
 )
 @click.option(
-    "--no-trim",
+    "--trim",
     is_flag=True,
     default=False,
     show_default=True,
-    help="Do not trim the primers.",
+    help="Trim primers.",
 )
 @click.option(
     "--classifier",
@@ -322,7 +322,7 @@ def run_workflow(workflow, workdir, configfile, jobs, maxmem, profile, dryrun, s
     help="Number of jobs for threads-dependent tasks.",
 )
 def config_workflow(
-    bascfq, demuxdir, dbdir, workdir, demuxer, fqs_min, subsample, no_trim, 
+    bascfq, demuxdir, dbdir, workdir, demuxer, fqs_min, subsample, trim, 
     classifier, jobs_min, jobs_max):
     """
     Config NAWF.
@@ -330,7 +330,7 @@ def config_workflow(
     logger.info(f"NAWF version: {__version__}")
     init_conf(
         bascfq, demuxdir, dbdir, workdir, "config.yaml", demuxer, fqs_min, subsample,
-        no_trim, classifier, jobs_min, jobs_max)
+        trim, classifier, jobs_min, jobs_max)
    
 if __name__ == "__main__":
     cli()

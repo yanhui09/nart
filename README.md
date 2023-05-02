@@ -176,7 +176,7 @@ Options:
   --fqs-min INTEGER               Minimum number of reads for the
                                   demultiplexed fastqs.  [default: 50]
   --subsample                     Subsample the reads.
-  --no-trim                       Do not trim the primers.
+  --trim                          Trim primers.
   --classifier [emu|minimap2lca|blast2lca]
                                   Classifier.  [default: emu]
   --jobs-min INTEGER              Number of jobs for common tasks.  [default:
