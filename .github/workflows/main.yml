@@ -56,5 +56,6 @@ jobs:
         run: |
           export PATH="${HOME}/conda/bin:$PATH"
           source activate nart
-          nawf config -b nart/workflow/resouces/data/raw.fastq.gz -d test/Database -w test
-          nawf run all -w test -n
+          gunzip nart/workflow/resouces/data/raw.fastq.gz
+          nawf config -b nart/workflow/resouces/data/raw.fastq -d tests/Database -w tests
+          nawf run all -w tests -n
