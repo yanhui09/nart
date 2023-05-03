@@ -12,6 +12,8 @@
 
 ![demo](https://github.com/yanhui09/demos/blob/main/nart.gif)
 
+[Demo video on Youtube](https://www.youtube.com/watch?v=TkdJGLOscPg)
+
 # DAG workflow
 `nawf` provide three options (i.e., `emu`, `minimap2lca` and `blast2lca`) to determine microbial composition.
 ![dag](nart/workflow/resources/dag.png)
