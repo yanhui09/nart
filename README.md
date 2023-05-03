@@ -10,6 +10,7 @@
 **Important: `NART` is under development, and here released as a preview. 
 `NART` is only tested in Linux systems, i.e., Ubuntu.**
 
+![demo](https://github.com/yanhui09/demos/blob/main/nart.gif)
 
 # DAG workflow
 `nawf` provide three options (i.e., `emu`, `minimap2lca` and `blast2lca`) to determine microbial composition.
