@@ -1,5 +1,4 @@
-<img src="https://github.com/yanhui09/nart/blob/main/icon.png" height="128">
-<h1 align="center">A tool for <br> Nanopore Amplicon Real-Time (NART) analysis</h1>
+<h1 align="center"><img src="https://github.com/yanhui09/nart/blob/main/icon.png">A tool for <br> Nanopore Amplicon Real-Time (NART) analysis</h1>
 
 [![Snakemake](https://img.shields.io/badge/snakemake-=7.25.2-brightgreen.svg)](https://snakemake.bitbucket.io)
 [![Build Status](https://github.com/yanhui09/nart/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/yanhui09/nart/actions?query=branch%3Amain+workflow%3ACI)
