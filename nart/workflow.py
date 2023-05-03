@@ -245,7 +245,7 @@ def run_workflow(workflow, workdir, configfile, jobs, maxmem, profile, dryrun, s
     help="Path to a basecalled fastq file.",
     type=click.Path(dir_okay=True,writable=True,resolve_path=True),
     cls = AloMutex,
-    required_if_not = ["demuxdir"],
+    required_if_not = [],
     not_required_if = ["demuxdir"],
 )
 @click.option(
@@ -254,7 +254,7 @@ def run_workflow(workflow, workdir, configfile, jobs, maxmem, profile, dryrun, s
     help="Path to a directory of demultiplexed fastq files.",
     type=click.Path(dir_okay=True,writable=True,resolve_path=True),
     cls = AloMutex,
-    required_if_not = ["bascfq"],
+    required_if_not = [],
     not_required_if = ["bascfq"],
 )
 @click.option(
