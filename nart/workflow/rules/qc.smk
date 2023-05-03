@@ -22,7 +22,6 @@ rule subsample:
     output:
         p = temp("{batch}/qc/subsampled/{barcode}_p.fastq"),
         n = temp("{batch}/qc/subsampled/{barcode}.fastq"),
-    conda: "../envs/seqkit.yaml"
     params:
         n = config["seqkit"]["n"],
     log: "logs/qc/subsample/{barcode}_{batch}.log"

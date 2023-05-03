@@ -4,11 +4,16 @@
 [![Build Status](https://github.com/yanhui09/nart/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/yanhui09/nart/actions?query=branch%3Amain+workflow%3ACI)
 
 `NART` is desgined for mapping-based Nanopore Amplicon (**Real-Time**) analysis, e.g., 16S rRNA gene.
-`NART` utils are composed of `nart` (entry to the real-time usage) and `nawf` (entry to the amplicon `Snakemake` workflow) in one python package.
+`NART` utils are composed of `nart` (Nanopore Amplicon Real-Time entry) and `nawf` (Nanopore Amplicon `snakemake` WorkFlow entry) in one python package.
 `NART` provides an (real-time) end-to-end solution from bascecalled reads to the final count matrix through mapping-based strategy.
 
 **Important: `NART` is under development, and here released as a preview. 
 `NART` is only tested in Linux systems, i.e., Ubuntu.**
+
+
+# DAG workflow
+`nawf` provide three options (i.e., `emu`, `minimap2lca` and `blast2lca`) to determine microbial composition.
+![dag](nart/workflow/resources/dag.png)
 
 # Installation
 [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) is the only required dependency prior to installation.
