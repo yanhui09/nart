@@ -36,7 +36,7 @@ To avoid inconsistency, we suggest installing `NART` in the above `conda` enviro
 conda activate nart
 pip install --editable .
 ```
-At this moment, `NART`` uses `guppy` or `minibar`` for custom barcode demultiplexing (in our lab).<br>
+At this moment, `NART` uses `guppy` or `minibar` for custom barcode demultiplexing (in our lab).<br>
 **Remember to prepare the barcoding files in `guppy` or `minibar` if new barcodes are introduced.** [Click me](nart/workflow/resources/README.md)
 
 # Quick start
