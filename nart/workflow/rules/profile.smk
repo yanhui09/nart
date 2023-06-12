@@ -1,11 +1,17 @@
+def get_emu_database(spikein=config["spikein_fasta"]):
+    if spikein == "none":
+        return rules.emu_prebuilt.output
+    else:
+        return rules.emu_spikein.output
+
 rule emu:
     input: 
-        rules.emu_prebuilt.output,
+        get_emu_database,
         fq = rules.q_filter.output,
     output: temp("{batch}/emu/{barcode}_rel-abundance.tsv")
     conda: "../envs/emu.yaml"
     params: 
-        db = DATABASE_DIR + "/emu/" + DATABASE_PREBUILT + "_prebuilt",
+        db = DATABASE_DIR + "/emu/" + DATABASE_PREBUILT + "_prebuilt" if config["spikein_fasta"] == "none" else DATABASE_DIR + "/emu/" + DATABASE_PREBUILT + "_prebuilt_spikein",
         outdir = os.getcwd() + "/{batch}/emu"
     log: "logs/emu/{barcode}_{batch}.log"
     benchmark: "benchmarks/emu/{barcode}_{batch}.txt"
@@ -56,6 +62,8 @@ rule emu_merge:
                 table["taxonomy"] = table[columns_to_combine].apply(lambda x: ";".join(x), axis=1)
             # if tax_id is "unassigned", taxonomy is "unassigned"
             table.loc[table["tax_id"] == "unassigned", "taxonomy"] = "unassigned"
+            # if taxonomy is ";;;;;;spikein", taxonomy is "spikein"
+            table.loc[table["taxonomy"] == ";;;;;;spikein", "taxonomy"] = "spikein"
             # only keep "tax_id", "estimated counts", "taxonomy"
             table = table[["tax_id", "taxonomy", "estimated counts"]]
             # use integer for "estimated counts"

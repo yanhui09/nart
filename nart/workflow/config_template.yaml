@@ -56,6 +56,7 @@ cutadapt:
   min_overlap: 6
 
 ##############################################################
+spikein_fasta: default # default | none | path/to/custom_spikein.fasta
 classifier: emu # emu|minimap2lca|blast2lca
 lca:
   # megan lca params

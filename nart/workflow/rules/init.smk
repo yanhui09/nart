@@ -44,6 +44,39 @@ rule emu_prebuilt:
         rm {params.database_dir}/emu/{params.taxdb}_prebuilt/{params.taxdb}.tar
         """
 
+rule emu_spikein:
+    input: 
+        rules.emu_prebuilt.output,
+        spikein=get_spikein_fasta(),
+    output:
+        expand(DATABASE_DIR + "/emu/" + DATABASE_PREBUILT + "_prebuilt_spikein/{file}", file = ["species_taxid.fasta", "taxonomy.tsv"])
+    params:
+        taxdb = DATABASE_PREBUILT,
+        database_dir = DATABASE_DIR,
+    message: "Adding spikein to the prebuit Emu database [{params.taxdb}]"
+    run:
+        # open spikein fasta and rename the header
+        # add spikein to the end of the prebuilt fasta, and make new unique headers 
+        # open spikein taxonomy and add to the end of the prebuilt taxonomy
+        # ugly but works: 1111111111
+        with open(output[0], "w") as f1, open(output[1], "w") as f2:
+            with open(input[0], "r") as g1:
+                for line in g1:
+                    f1.write(line)
+            with open(input[1], "r") as g2:
+                for line in g2:
+                    f2.write(line)
+            with open(input.spikein, "r") as g:
+                i = 0
+                suffix = 1111111111
+                for line in g:
+                    if line.startswith(">"):
+                        line = ">" + str(suffix + i) + "\n"
+                        line2 = str(suffix + i) + "\tspikein\n" 
+                        f2.write(line2)
+                        i += 1 
+                    f1.write(line)
+
 # download silva database
 rule download_silva:
     output:

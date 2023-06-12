@@ -5,6 +5,17 @@ configfile: "config.yaml"
 DATABASE_DIR = os.path.abspath(config["database_dir"].rstrip("/"))
 DATABASE_PREBUILT = config["emu"]["prebuilt_database"]
 CLASSIFIER = config["classifier"]
+# get spikein fasta or not
+def get_spikein_fasta(spikein = config["spikein_fasta"]):
+    if spikein == "none":
+        return None
+    elif spikein == "default":
+        return os.path.join(workflow.basedir + "/resources/data/spikein.fasta")
+    elif os.path.exists(spikein):
+        return os.path.abspath(spikein)
+    else:
+        raise ValueError("`spikein_fasta` must be configured as `default`, `none` or the path to an existing fasta file.")
+
 # use basecall_fq file basename or demux dirname as batch dir
 def get_batch_dir(basc_fq = config["basecall_fq"], demux_dir = config["demultiplex_dir"]):
     # only and at least one is allowed
