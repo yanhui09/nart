@@ -47,7 +47,7 @@ rule emu_prebuilt:
 rule emu_spikein:
     input: 
         rules.emu_prebuilt.output,
-        spikein=get_spikein_fasta(),
+        spikein = get_spikein_fasta(),
     output:
         expand(DATABASE_DIR + "/emu/" + DATABASE_PREBUILT + "_prebuilt_spikein/{file}", file = ["species_taxid.fasta", "taxonomy.tsv"])
     params:
@@ -124,24 +124,6 @@ rule filt_silva:
         seqkit grep -v -r -i -n -p Phage -p Eukaryota -p Mitochondria -p Chloroplast -p Calanus {input} | seqkit seq --rna2dna -o {output} 1> {log} 2>&1
         """
 
-rule minimap2silva_db:
-    input: rules.filt_silva.output
-    output: DATABASE_DIR + "/silva/SILVA_ssu_nr99_filt.mmi"
-    message: "Building the minimap2 database with SILVA reference"
-    conda: "../envs/lca.yaml"
-    params:
-        k = 15,
-    log: "logs/taxonomy/silva/minimap2_db.log"
-    benchmark: "benchmarks/taxonomy/silva/minimap2_db.txt"
-    threads: config["threads"]["large"]
-    resources:
-        mem = config["mem"]["normal"],
-        time = config["runtime"]["simple"],
-    shell: 
-        """
-        minimap2 -d {output} -t {threads} -k {params.k} {input} 1> {log} 2>&1 
-        """
-
 rule silva2ncbi_map:
     input: 
         ncbisp = DATABASE_DIR + "/silva/tax_ncbi-species_nr99.txt",
@@ -162,10 +144,58 @@ rule silva2ncbi_map:
 		--out {output} 1> {log} 2>&1
         """
 
-rule blast_db:
-    input: rules.filt_silva.output
+rule silva_spikein:
+    input:
+        rules.filt_silva.output,
+        rules.silva2ncbi_map.output,
+        spikein = get_spikein_fasta(),
+    output:
+        expand(DATABASE_DIR + "/silva_spikein/{file}", file = ["SILVA_ssu_nr99_filt.fasta", "silva_to_ncbi.map"])
+    message: "Adding spikein to the Silva database"
+    run:
+        # similar to rules.emu_spikein
+        with open(output[0], "w") as f1, open(output[1], "w") as f2:
+            with open(input[0], "r") as g1:
+                for line in g1:
+                    f1.write(line)
+            with open(input[1], "r") as g2:
+                for line in g2:
+                    f2.write(line)
+            with open(input.spikein, "r") as g:
+                i = 0
+                suffix = 1111111111
+                for line in g:
+                    if line.startswith(">"):
+                        line = ">" + str(suffix + i) + "\n"
+                        # https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=Info&id=10710&lvl=3&lin=f&keep=1&srchmode=1&unlock
+                        # use lambda phage taxid:10710
+                        line2 = str(suffix + i) + "\t10710\n" 
+                        f2.write(line2)
+                        i += 1 
+                    f1.write(line)
+
+rule minimap2silva_db:
+    input: DATABASE_DIR + "/{silva}/SILVA_ssu_nr99_filt.fasta"
+    output: DATABASE_DIR + "/{silva}/SILVA_ssu_nr99_filt.mmi"
+    message: "Building the minimap2 database with SILVA reference"
+    conda: "../envs/lca.yaml"
+    params:
+        k = 15,
+    log: "logs/taxonomy/silva/minimap2{silva}_db.log"
+    benchmark: "benchmarks/taxonomy/silva/minimap2{silva}_db.txt"
+    threads: config["threads"]["large"]
+    resources:
+        mem = config["mem"]["normal"],
+        time = config["runtime"]["simple"],
+    shell: 
+        """
+        minimap2 -d {output} -t {threads} -k {params.k} {input} 1> {log} 2>&1 
+        """
+
+rule blast2silva_db:
+    input: DATABASE_DIR + "/{silva}/SILVA_ssu_nr99_filt.fasta"
     output: 
-        multiext(DATABASE_DIR + "/silva/SILVA_ssu_nr99_filt.fasta",
+        multiext(DATABASE_DIR + "/{silva}/SILVA_ssu_nr99_filt.fasta",
             ".ndb",
             ".nhr",
             ".nin",
@@ -176,8 +206,8 @@ rule blast_db:
             )
     message: "Building the blast database with SILVA reference"
     conda: "../envs/lca.yaml"
-    log: "logs/taxonomy/silva/blast_db.log"
-    benchmark: "benchmarks/taxonomy/silva/blast_db.txt"
+    log: "logs/taxonomy/silva/blast2{silva}_db.log"
+    benchmark: "benchmarks/taxonomy/silva/blast2{silva}_db.txt"
     resources:
         mem = config["mem"]["normal"],
         time = config["runtime"]["simple"],

@@ -80,10 +80,33 @@ rule emu_merge:
         # write otu_table to file; integer without decimal
         otu_table.to_csv(output[0], sep="\t", index=False, float_format="%.0f")
 
+def get_silva_database(mode="minimap2", spikein=config["spikein_fasta"], taxmap=False):
+    if spikein == "none":
+        silva = "silva"
+    else:
+        silva = "silva_spikein"
+    if taxmap is True:
+        return DATABASE_DIR + "/{silva}/silva_to_ncbi.map".format(silva=silva)
+    else:
+        if mode == "minimap2":
+            return DATABASE_DIR + "/{silva}/SILVA_ssu_nr99_filt.mmi".format(silva=silva)
+        elif mode == "blastn":
+            return  multiext(DATABASE_DIR + "/{silva}/SILVA_ssu_nr99_filt.fasta".format(silva=silva),
+                ".ndb",
+                ".nhr",
+                ".nin",
+                ".not",
+                ".nsq",
+                ".ntf",
+                ".nto"
+                )
+        else:
+            raise ValueError("mode must be minimap2 or blastn")
+
 # minimap2lca
 rule minimap2:
     input:
-        mmi = rules.minimap2silva_db.output,
+        mmi = get_silva_database(mode="minimap2"),
         fq = rules.q_filter.output,
     output: 
         sam4 = temp("{batch}/minimap2lca/{barcode}.sam4"),
@@ -112,7 +135,7 @@ rule minimap2rma:
     input:
         fq = rules.q_filter.output,
         sam = rules.minimap2.output.sam,
-        silva2ncbi_map = rules.silva2ncbi_map.output,
+        silva2ncbi_map = get_silva_database(taxmap=True),
     output: temp("{batch}/minimap2lca/{barcode}.rma")
     conda: "../envs/lca.yaml"
     params:
@@ -149,16 +172,8 @@ rule minimap2rma:
 
 rule blastn:
     input:
-        multiext(DATABASE_DIR + "/silva/SILVA_ssu_nr99_filt.fasta",
-            ".ndb",
-            ".nhr",
-            ".nin",
-            ".not",
-            ".nsq",
-            ".ntf",
-            ".nto"
-            ),
-        db = rules.filt_silva.output,
+        get_silva_database(mode="blastn"), 
+        db = get_silva_database(mode="blastn")[0].split(".ndb")[0],
         fq = rules.q_filter.output,
     resources:
         mem = config["mem"]["normal"],
@@ -182,7 +197,7 @@ rule blast2rma:
     input:
         fa = rules.blastn.output.fa,
         tab = rules.blastn.output.tab,
-        silva2ncbi_map = rules.silva2ncbi_map.output,
+        silva2ncbi_map = get_silva_database(taxmap=True),
     output: temp("{batch}/blast2lca/{barcode}.rma")
     conda: "../envs/lca.yaml"
     params:
@@ -270,6 +285,8 @@ rule lca_merge:
             table = table.rename(columns={0: "tax_id", 1: "taxonomy", 2: "estimated counts"})
             # if tax_id is 1, taxonomy is "unassigned"
             table.loc[table["tax_id"] == 1, "taxonomy"] = "unassigned"
+            # if tax_id == 10710, taxonomy is "spikein"
+            table.loc[table["tax_id"] == 10710, "taxonomy"] = "spikein"
             # use integer for "estimated counts"
             table["estimated counts"] = table["estimated counts"].astype(int)
             # rename "estimated counts" to sample name
