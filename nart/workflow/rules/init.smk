@@ -44,6 +44,30 @@ rule emu_prebuilt:
         rm {params.database_dir}/emu/{params.taxdb}_prebuilt/{params.taxdb}.tar
         """
 
+def add_spikein(fasta_in, tax_in, spikein, fasta_out, tax_out, spikein_tax):
+    # open spikein fasta and rename the header
+    # add spikein to the end of the prebuilt fasta, and make new unique headers 
+    # open spikein taxonomy and add to the end of the prebuilt taxonomy
+    # ugly but works: 1111111111
+    # custom spikein_tax according to estimation appraoch
+    with open(fasta_out, "w") as f1, open(tax_out, "w") as f2:
+        with open(fasta_in, "r") as g1:
+            for line in g1:
+                f1.write(line)
+        with open(tax_in, "r") as g2:
+            for line in g2:
+                f2.write(line)
+        with open(spikein, "r") as g:
+            i = 0
+            suffix = 1111111111
+            for line in g:
+                if line.startswith(">"):
+                    line = ">" + str(suffix + i) + "\n"
+                    line2 = str(suffix + i) + "\t" + str(spikein_tax) + "\n" 
+                    f2.write(line2)
+                    i += 1 
+                f1.write(line)
+
 rule emu_spikein:
     input: 
         rules.emu_prebuilt.output,
@@ -55,28 +79,8 @@ rule emu_spikein:
         database_dir = DATABASE_DIR,
     message: "Adding spikein to the prebuit Emu database [{params.taxdb}]"
     run:
-        # open spikein fasta and rename the header
-        # add spikein to the end of the prebuilt fasta, and make new unique headers 
-        # open spikein taxonomy and add to the end of the prebuilt taxonomy
-        # ugly but works: 1111111111
-        with open(output[0], "w") as f1, open(output[1], "w") as f2:
-            with open(input[0], "r") as g1:
-                for line in g1:
-                    f1.write(line)
-            with open(input[1], "r") as g2:
-                for line in g2:
-                    f2.write(line)
-            with open(input.spikein, "r") as g:
-                i = 0
-                suffix = 1111111111
-                for line in g:
-                    if line.startswith(">"):
-                        line = ">" + str(suffix + i) + "\n"
-                        line2 = str(suffix + i) + "\tspikein\n" 
-                        f2.write(line2)
-                        i += 1 
-                    f1.write(line)
-
+        add_spikein(input[0], input[1], input.spikein, output[0], output[1], spikein_tax="spikein")
+       
 # download silva database
 rule download_silva:
     output:
@@ -154,25 +158,9 @@ rule silva_spikein:
     message: "Adding spikein to the Silva database"
     run:
         # similar to rules.emu_spikein
-        with open(output[0], "w") as f1, open(output[1], "w") as f2:
-            with open(input[0], "r") as g1:
-                for line in g1:
-                    f1.write(line)
-            with open(input[1], "r") as g2:
-                for line in g2:
-                    f2.write(line)
-            with open(input.spikein, "r") as g:
-                i = 0
-                suffix = 1111111111
-                for line in g:
-                    if line.startswith(">"):
-                        line = ">" + str(suffix + i) + "\n"
-                        # https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=Info&id=10710&lvl=3&lin=f&keep=1&srchmode=1&unlock
-                        # use lambda phage taxid:10710
-                        line2 = str(suffix + i) + "\t10710\n" 
-                        f2.write(line2)
-                        i += 1 
-                    f1.write(line)
+        # https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=Info&id=10710&lvl=3&lin=f&keep=1&srchmode=1&unlock
+        # use lambda phage taxid:10710
+        add_spikein(input[0], input[1], input.spikein, output[0], output[1], spikein_tax="10710")
 
 rule minimap2silva_db:
     input: DATABASE_DIR + "/{silva}/SILVA_ssu_nr99_filt.fasta"
