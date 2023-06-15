@@ -29,9 +29,9 @@ subsample: false
 # filter reads by quality and length range
 seqkit:
   n: 5000 # subsampling number [int]
-  min_qual: 10
+  min_qual: 7
   min_len: 800
-  max_len: 1500
+  max_len: 1600
 
 # rm chimeras
 rm_chimera: true
