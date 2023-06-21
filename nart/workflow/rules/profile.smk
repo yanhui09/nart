@@ -20,10 +20,15 @@ rule emu:
         mem = config["mem"]["normal"],
         time = config["runtime"]["default"],
     shell:
-        "emu abundance --db {params.db} {input.fq} "
-        " --keep-counts --threads {threads} "
-        " --output-dir {params.outdir} "
-        " > {log} 2>&1 "
+        """
+        emu abundance --db {params.db} {input.fq} --keep-counts --threads {threads} --output-dir {params.outdir} > {log} 2>&1 || touch {output}
+        # if {output} empty, rm *_emu_alignments.sam and send warning message to log
+        if [ ! -s {output} ]
+        then
+            rm {params.outdir}/{wildcards.barcode}_emu_alignments.sam -f
+            echo "EMU failed for {wildcards.barcode}, pseduo abundacne file was created." >> {log}
+        fi
+        """
 
 def get_profiles(wildcards, classifier=CLASSIFIER):
     barcodes = get_qced_barcodes(wildcards) 
@@ -49,6 +54,9 @@ rule emu_merge:
         for f in input.otutab:
             # get file name
             barcode = os.path.basename(f).split("_")[0]
+            # if file is empty, skip
+            if os.stat(f).st_size == 0:
+                continue
             table = pd.read_csv(f, sep="\t")
             if params.db == 'silva':
                 # siliva ouput one 'lineage' column
