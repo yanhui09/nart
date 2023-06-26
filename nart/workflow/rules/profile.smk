@@ -52,11 +52,9 @@ rule emu_merge:
         # merge tsv files
         otu_table = pd.DataFrame()
         for f in input.otutab:
-            # get file name
-            barcode = os.path.basename(f).split("_")[0]
-            # if file is empty, skip
             if os.stat(f).st_size == 0:
                 continue
+            barcode = os.path.basename(f).split("_")[0]
             table = pd.read_csv(f, sep="\t")
             if params.db == 'silva':
                 # siliva ouput one 'lineage' column
@@ -134,9 +132,13 @@ rule minimap2:
     threads: config["threads"]["large"]
     shell:
         """
-        minimap2 -t {threads} -K {params.K} -ax {params.x} -f {params.f} --secondary=no {input.mmi} {input.fq} > {output.sam4} 2> {log}
-        grep "^@" {output.sam4} > {output.sam}
-        grep -v "^@" {output.sam4} | awk -F '\t|de:f:' '$(NF-1) < {params.max_de}' >> {output.sam} 2>> {log}
+        if [ ! -s {input.fq} ]; then
+            touch {output.sam4} {output.sam}
+        else
+            minimap2 -t {threads} -K {params.K} -ax {params.x} -f {params.f} --secondary=no {input.mmi} {input.fq} > {output.sam4} 2> {log}
+            grep "^@" {output.sam4} > {output.sam}
+            grep -v "^@" {output.sam4} | awk -F '\t|de:f:' '$(NF-1) < {params.max_de}' >> {output.sam} 2>> {log}
+        fi
         """
 
 rule minimap2rma:
@@ -162,20 +164,24 @@ rule minimap2rma:
     threads: config["threads"]["large"]
     shell:
         """
-        sam2rma \
-        -i {input.sam} \
-        -r {input.fq} \
-        -o {output} \
-        -lg \
-        -m {params.maxMatchesPerRead} \
-        -top {params.topPercent} \
-        -supp {params.minSupportPercent} \
-        -mrc {params.minPercentReadCover} \
-        -mrefc {params.minPercentReferenceCover} \
-        -alg {params.lcaAlgorithm} \
-        -lcp {params.lcaCoveragePercent} \
-        -ram readCount \
-        -s2t {input.silva2ncbi_map} > {log} 2>&1
+        if [ ! -s {input.fq} ] && [ ! -s {input.sam} ]; then
+            touch {output}
+        else
+            sam2rma \
+            -i {input.sam} \
+            -r {input.fq} \
+            -o {output} \
+            -lg \
+            -m {params.maxMatchesPerRead} \
+            -top {params.topPercent} \
+            -supp {params.minSupportPercent} \
+            -mrc {params.minPercentReadCover} \
+            -mrefc {params.minPercentReferenceCover} \
+            -alg {params.lcaAlgorithm} \
+            -lcp {params.lcaCoveragePercent} \
+            -ram readCount \
+            -s2t {input.silva2ncbi_map} > {log} 2>&1
+        fi
         """
 
 rule blastn:
@@ -197,8 +203,12 @@ rule blastn:
     threads: config["threads"]["large"]
     shell: 
         """
-        seqkit fq2fa {input.fq} -o {output.fa} > {log} 2>&1
-        blastn -query {output.fa} -db {input.db} -out {output.tab} -outfmt 6 -num_threads {threads} -max_target_seqs {params.max_target_seqs} >> {log} 2>&1
+        if [ ! -s {input.fq} ]; then
+            touch {output.fa} {output.tab}
+        else
+            seqkit fq2fa {input.fq} -o {output.fa} > {log} 2>&1
+            blastn -query {output.fa} -db {input.db} -out {output.tab} -outfmt 6 -num_threads {threads} -max_target_seqs {params.max_target_seqs} >> {log} 2>&1
+        fi
         """
 
 rule blast2rma:
@@ -224,22 +234,26 @@ rule blast2rma:
     threads: config["threads"]["large"]
     shell:
         """
-        blast2rma \
-        -i {input.tab} \
-        -f BlastTab \
-        -bm BlastN \
-        -r {input.fa} \
-        -o {output} \
-        -lg \
-        -m {params.maxMatchesPerRead} \
-        -top {params.topPercent} \
-        -supp {params.minSupportPercent} \
-        -mrc {params.minPercentReadCover} \
-        -mrefc {params.minPercentReferenceCover} \
-        -alg {params.lcaAlgorithm} \
-        -lcp {params.lcaCoveragePercent} \
-        -ram readCount \
-        -s2t {input.silva2ncbi_map} > {log} 2>&1
+        if [ ! -s {input.fa} ] && [ ! -s {input.tab} ]; then
+            touch {output}
+        else
+            blast2rma \
+            -i {input.tab} \
+            -f BlastTab \
+            -bm BlastN \
+            -r {input.fa} \
+            -o {output} \
+            -lg \
+            -m {params.maxMatchesPerRead} \
+            -top {params.topPercent} \
+            -supp {params.minSupportPercent} \
+            -mrc {params.minPercentReadCover} \
+            -mrefc {params.minPercentReferenceCover} \
+            -alg {params.lcaAlgorithm} \
+            -lcp {params.lcaCoveragePercent} \
+            -ram readCount \
+            -s2t {input.silva2ncbi_map} > {log} 2>&1
+        fi
         """
 
 wildcard_constraints:
@@ -259,20 +273,24 @@ rule rma2counts:
     benchmark: "benchmarks/{classifier}/{barcode}_{batch}_readinfo.txt"
     shell:
         """
-        rma2info \
-        -i {input} \
-        -c2c Taxonomy \
-        -mro \
-        -o {output.path} > {log} 2>&1
-        rma2info \
-        -i {input} \
-        -c2c Taxonomy \
-        -p -mro \
-        -o {output.ncbi} >> {log} 2>&1
-        paste \
-        <(cut -f1 {output.path}) \
-        <(sed 's/\\[[A-Z]\\] //g;s/; /;/g' {output.ncbi}) \
-        > {output.ri}
+        if [ ! -s {input} ]; then
+            touch {output.ncbi} {output.path} {output.ri}
+        else
+            rma2info \
+            -i {input} \
+            -c2c Taxonomy \
+            -mro \
+            -o {output.path} > {log} 2>&1
+            rma2info \
+            -i {input} \
+            -c2c Taxonomy \
+            -p -mro \
+            -o {output.ncbi} >> {log} 2>&1
+            paste \
+            <(cut -f1 {output.path}) \
+            <(sed 's/\\[[A-Z]\\] //g;s/; /;/g' {output.ncbi}) \
+            > {output.ri}
+        fi
         """
 
 rule lca_merge:
@@ -285,7 +303,8 @@ rule lca_merge:
         # merge tsv files
         otu_table = pd.DataFrame()
         for f in input.otutab:
-            # get file name
+            if os.path.getsize(f) == 0:
+                continue
             barcode = os.path.basename(f).split(".")[0]
             # read tsv file, first line is not header
             table = pd.read_csv(f, sep="\t", header = None)
