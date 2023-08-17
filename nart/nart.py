@@ -16,7 +16,7 @@ def monitor_directory_for_new_files(directory_path, file_extension, timeout_seco
     to a text file.
 
     :param directory_path: The path of the directory to monitor.
-    :param file_extension: The file extension to monitor for (e.g. ".fastq").
+    :param file_extension: The file extension to monitor for (e.g. ".fastq.gz").
     :param timeout_seconds: The number of seconds to wait before exiting if no new files are created.
     :param output_file: The path of the file to write the absolute path of each new file to.
     """
@@ -109,9 +109,9 @@ def cli(self):
     "-e",
     "--extension",
     type=str,
-    default=".fastq",
+    default=".fastq.gz",
     show_default=True,
-    help="The file extension to monitor for (e.g. '.fastq').",
+    help="The file extension to monitor for (e.g. '.fastq.gz').",
 )
 @click.option(
     "-w",
