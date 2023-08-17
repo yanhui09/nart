@@ -14,7 +14,6 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt /var/lib/dpkg /var/lib/cache /var/lib/log
 
-WORKDIR /tmp/repo/nart
 RUN micromamba env create -n nart -f env.yaml \
     && eval "$(micromamba shell hook -s bash)" \
     && micromamba activate /opt/conda/envs/nart \
