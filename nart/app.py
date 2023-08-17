@@ -144,7 +144,7 @@ def run_server(port, work_dir, wait_time, relative, rm_unmapped, min_abs_abun):
     def pct_complete():
         return str(get_num_files(batch_dir, '.tsv') / get_num_uniq_lines(fq_txt) * 100)
     
-    app.run(debug=False, port=port)
+    app.run(host='0.0.0.0', debug=False, port=port)
 
 if __name__ == '__main__':
     run_server()
