@@ -104,8 +104,8 @@ Usage: nart monitor [OPTIONS]
 
 Options:
   -q, --query PATH       A query directory to monitor the new fastq files.
-  -e, --extension TEXT   The file extension to monitor for (e.g. '.fastq').
-                         [default: .fastq]
+  -e, --extension TEXT   The file extension to monitor for (e.g. '.fastq.gz').
+                         [default: .fastq.gz]
   -w, --workdir PATH     Workflow working directory.  [default: .]
   -t, --timeout INTEGER  Stop query if no new files were generated within the
                          give minutes.  [default: 30]
