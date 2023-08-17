@@ -57,7 +57,7 @@ nawf run all                                                   # start analysis
 Before starting real-time analysis, you need `nawf` to configure the workflow according to your needs. 
 ```
 conda activate nart                                            # activate required environment 
-nawf config -b /path/to/basecall_fastq -d /path/to/database    # init config file and check
+nawf config -d /path/to/database                               # init config file and check
 ```
 
 In common cases, you need three independent sessions to handle monitor, process and visulization, repectively.
