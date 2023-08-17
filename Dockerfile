@@ -23,5 +23,6 @@ RUN micromamba env create -n nart -f env.yaml \
     && micromamba clean --all --yes
 
 ENV PATH /opt/conda/envs/nart/bin:${PATH}
-
 RUN pip install --editable .
+
+WORKDIR /home

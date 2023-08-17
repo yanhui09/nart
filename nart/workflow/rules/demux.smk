@@ -88,10 +88,10 @@ rule get_demux_external:
 def check_basecall_fq(fq = config["basecall_fq"]):
     if fq is not None:
         if not os.path.isfile(fq):
-            raise ValueError("\n  'basecall_fq' ({}) in config not found.\n".format(dir_path))
+            raise ValueError("\n  'basecall_fq' ({}) in config not found.\n".format(fq))
         else:
             if os.path.getsize(fq) == 0:
-                raise ValueError("\n  'basecall_fq' ({}) in config is empty.\n".format(dir_path))
+                raise ValueError("\n  'basecall_fq' ({}) in config is empty.\n".format(fq))
 
 # get demux input
 def get_demux(demux=config["demuxer"], demux_external=config["demultiplex_dir"], batch_id=BATCH_ID):
