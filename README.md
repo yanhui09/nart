@@ -21,7 +21,21 @@
 `nawf` provide three options (i.e., `emu`, `minimap2lca` and `blast2lca`) to determine microbial composition.
 ![dag](nart/workflow/resources/dag.png)
 
-# Installation
+# Docker image
+The easiest way to use `NART` is to pull the `docker` image from [Docker Hub](https://hub.docker.com/r/yanhui09/nart) for cross-platform support.
+```
+docker pull yanhui09/nart
+```
+
+**To use the docker image**, you need to mount your data directory, e.g., `pwd`, to the  `/home` in the container.
+```
+docker run -it -v `pwd`:/home --network host --privileged yanhui09/nart
+```
+
+**Note: `--network host` is required for `nart monitor` to work.**
+> The host networking driver only works on Linux hosts, and is not supported on Docker Desktop for Mac, Docker Desktop for Windows, or Docker EE for Windows Server. [[Read more]](https://docs.docker.com/network/drivers/host/)
+
+# Installation from Github repository
 [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) is the only required dependency prior to installation.
 [Miniconda](https://docs.conda.io/en/latest/miniconda.html) is enough for the whole pipeline. 
 
