@@ -2,6 +2,8 @@
 
 [![Snakemake](https://img.shields.io/badge/snakemake-=7.25.2-brightgreen.svg)](https://snakemake.bitbucket.io)
 [![Build Status](https://github.com/yanhui09/nart/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/yanhui09/nart/actions?query=branch%3Amain+workflow%3ACI)
+[![linux/amd64]](https://img.shields.io/badge/linux-amd64-blue.svg)(https://en.wikipedia.org/wiki/X86-64)
+[![docker]](https://img.shields.io/badge/docker-blue.svg)(https://hub.docker.com/r/yanhui09/nart)
 
 `NART` is desgined for mapping-based Nanopore Amplicon (**Real-Time**) analysis, e.g., 16S rRNA gene.
 `NART` utils are composed of `nart` (Nanopore Amplicon Real-Time entry) and `nawf` (Nanopore Amplicon `snakemake` WorkFlow entry) in one python package.
