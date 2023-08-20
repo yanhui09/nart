@@ -59,10 +59,15 @@ At this moment, `NART` uses `guppy` or `minibar` for custom barcode demultiplexi
 **Remember to prepare the barcoding files in `guppy` or `minibar` if new barcodes are introduced.** [Click me](nart/workflow/resources/README.md)
 
 # Quick start
+
+Remember to activate the `conda` environment if `NART` is installed in a `conda` environment.
+```
+conda activate nart
+```
+
 ## Amplicon analysis in single batch
 `nawf` can be used to profile any single basecalled `fastq` file from a Nanopore run or batch.
 ```
-conda activate nart                                            # activate required environment 
 nawf config -b /path/to/basecall_fastq -d /path/to/database    # init config file and check
 nawf run all                                                   # start analysis
 ```
@@ -72,24 +77,20 @@ nawf run all                                                   # start analysis
 
 Before starting real-time analysis, you need `nawf` to configure the workflow according to your needs. 
 ```
-conda activate nart                                            # activate required environment 
 nawf config -d /path/to/database                               # init config file and check
 ```
 
 In common cases, you need three independent sessions to handle monitor, process and visulization, repectively.
 1. Minitor the bascall output and record
 ```
-conda activate nart                                            # activate required environment 
 nart monitor -q /path/to/basecall_fastq_dir                    # monitor basecall output
 ```
 2. Start amplicon analysis for new fastq
 ```
-conda activate nart                                            # activate required environment 
 nart run -t 10                                                 # real-time process in batches
 ```
 3. Update the feature table for interactively visualize in the browser
 ```
-conda activate nart                                            # activate required environment 
 nart visual                                                    # interactive visualization
 ```
 
