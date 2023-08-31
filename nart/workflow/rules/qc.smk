@@ -49,7 +49,7 @@ def get_raw(subsample = config["subsample"], n = config["seqkit"]["n"]):
     else:
         return rules.collect_fastq.output
 
-# run yacrd to rm chimeras first so as to allow adequate coverage for ava
+# filter chimeras with yacrd
 rule minimap2ava:
     input: get_raw()
     output: temp("{batch}/qc/yacrd/{barcode}.paf")
@@ -81,7 +81,7 @@ rule yacrd:
     resources:
         mem = config["mem"]["large"],
         time = config["runtime"]["simple"],
-    shell: "yacrd -i {input.ava} -o {log} -c {params.c} -n {params.n} -t {threads} scrubb -i {input.fq} -o {output} 2>> {log}"
+    shell: "yacrd -i {input.ava} -o {log} -c {params.c} -n {params.n} -t {threads} filter -i {input.fq} -o {output} 2>> {log}"
 
 def get_chimera_free(rm_chimera= config["rm_chimera"]):
     check_val("rm_chimera", rm_chimera, bool)
