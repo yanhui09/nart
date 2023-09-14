@@ -152,7 +152,7 @@ def merge_table(out_table, otu_table):
 def update_table(table_dir, out_table_path):
     ''''
     merge all otu tables in the table_dir as one;
-    update table when out_table is newer than the otu batch table
+    update table when out_table is older than the latest batch otu_table
     '''
     # list all .tsv files in the table_dir
     otu_tables = os.listdir(table_dir)
@@ -163,6 +163,10 @@ def update_table(table_dir, out_table_path):
         for otu_table in otu_tables:
             # if the otu_table is newer than the out_table, update the out_table
             if os.path.getmtime(otu_table) > os.path.getmtime(out_table_path):
+                # if otu_table not empty, merge
+                if os.stat(otu_table).st_size == 0:
+                    print("The batch table ({}) is empty.".format(otu_table))
+                    continue
                 otu_table = pd.read_csv(otu_table, sep="\t")
                 out_table = merge_table(out_table, otu_table)
     else:
@@ -185,7 +189,7 @@ def run_nart(file_list, wait_minutes, workflow, workdir, configfile, jobs, maxme
         raise ValueError("The {} does not exist.".format(file_list))
     # stop when "fqs.txt" is not updated
     while True:
-        # record file revised time
+        # record file change time
         file_time = os.path.getmtime(file_list)    
         # load the fqs.txt
         with open(file_list, "r") as f:
@@ -193,7 +197,7 @@ def run_nart(file_list, wait_minutes, workflow, workdir, configfile, jobs, maxme
             for file_path in file_paths:
                 # remove the "\n" in the end of each line
                 file_path = file_path.strip()
-                # if the otu batch file exists, skip it
+                # if the otu batch file exists, update
                 batch_id = os.path.basename(file_path).split(".")[0]
                 if os.path.exists(workdir + "/batches/" + batch_id + ".tsv"):
                     update_table(workdir + "/batches", workdir + "/otu_table.tsv")

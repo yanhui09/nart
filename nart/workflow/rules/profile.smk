@@ -83,8 +83,12 @@ rule emu_merge:
                 otu_table = pd.merge(otu_table, table, on=["tax_id", "taxonomy"], how="outer")
         # fill NaN with 0
         otu_table = otu_table.fillna(0)
-        # write otu_table to file; integer without decimal
-        otu_table.to_csv(output[0], sep="\t", index=False, float_format="%.0f")
+        # if dataframe is empty, use open() to create empty file to avoid an empty line in output
+        if otu_table.empty:
+            open(output[0], 'w').close()
+        else:
+            # write otu_table to file; integer without decimal
+            otu_table.to_csv(output[0], sep="\t", index=False, float_format="%.0f")
 
 def get_silva_database(mode="minimap2", spikein=config["spikein_fasta"], taxmap=False):
     if spikein == "none":
@@ -325,5 +329,9 @@ rule lca_merge:
                 otu_table = pd.merge(otu_table, table, on=["tax_id", "taxonomy"], how="outer")
         # fill NaN with 0
         otu_table = otu_table.fillna(0)
-        # write otu_table to file; integer without decimal
-        otu_table.to_csv(output[0], sep="\t", index=False, float_format="%.0f")
+        # if dataframe is empty, use open() to create empty file to avoid an empty line in output
+        if otu_table.empty:
+            open(output[0], 'w').close()
+        else:
+            # write otu_table to file; integer without decimal
+            otu_table.to_csv(output[0], sep="\t", index=False, float_format="%.0f")

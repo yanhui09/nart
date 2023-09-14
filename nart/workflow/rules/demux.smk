@@ -108,7 +108,6 @@ checkpoint demux_check:
     input: get_demux()
     output: temp(directory("{batch}/demultiplexed"))
     log: "logs/demultiplex/check_{batch}.log"
-    benchmark: "benchmarks/demultiplex/check_{batch}.txt"
     params:
         nreads_m=config["nreads_m"],
     shell: 
