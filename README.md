@@ -68,8 +68,8 @@ conda activate nart
 ## Amplicon analysis in single batch
 `nawf` can be used to profile any single basecalled `fastq` file from a Nanopore run or batch.
 ```
-nawf config -b /path/to/basecall_fastq -d /path/to/database    # init config file and check
-nawf run all                                                   # start analysis
+nawf config -b /path/to/single_basecall_fastq -d /path/to/database    # init config file and check
+nawf run all                                                          # start analysis
 ```
 
 ## Real-time analysis
@@ -77,7 +77,7 @@ nawf run all                                                   # start analysis
 
 Before starting real-time analysis, you need `nawf` to configure the workflow according to your needs. 
 ```
-nawf config -d /path/to/database                               # init config file and check
+nawf config -d /path/to/database                                      # init config file and check
 ```
 
 In common cases, you need three independent sessions to handle monitor, process and visulization, repectively.
