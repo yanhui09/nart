@@ -138,7 +138,9 @@ def monitor(query, extension, workdir, timeout):
 
 # run
 def merge_table(out_table, otu_table):
-    # combine tables by "tax_id" and "taxonomy" if they are the same
+    # merge tables by "tax_id" and "taxonomy"
+    # force tax_id to str
+    out_table["tax_id"] = out_table["tax_id"].astype(str)
     out_table = pd.merge(out_table, otu_table, on=["tax_id", "taxonomy"], how="outer", suffixes=("", "_x")).fillna(0)
     # add the values of "_x" to the original columns, and drop the "_x" columns
     col_x = [col for col in out_table.columns if col.endswith("_x")]
