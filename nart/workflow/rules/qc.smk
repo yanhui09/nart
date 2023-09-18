@@ -150,16 +150,15 @@ rule revcomp_fq:
         time = config["runtime"]["simple"],
     shell: "seqkit seq -j {threads} -r -p -t dna {input} > {output} 2> {log}"
 
-# option to trim or not
-def trim_check(trim = config["trim"], subsample = config["subsample"], n = config["seqkit"]["n"]):
-    check_val("trim", trim, bool)
+def primer_check(primer_check = config["primer_check"], subsample = config["subsample"], n = config["seqkit"]["n"]):
+    check_val("primer_check", primer_check, bool)
     out = [rules.check_primers.output.passed, rules.revcomp_fq.output]
-    if trim is False:
+    if primer_check is False:
         out = get_raw(subsample, n)
     return out
 
 rule q_filter:
-    input: trim_check()
+    input: primer_check()
     output: temp("{batch}/qc/qfilt/{barcode}.fastq")
     params:
         Q = config["seqkit"]["min_qual"],
