@@ -71,15 +71,15 @@ def add_spikein(fasta_in, tax_in, spikein, fasta_out, tax_out, spikein_tax):
 rule emu_spikein:
     input: 
         rules.emu_prebuilt.output,
-        spikein = "pass" if get_spikein_fasta() is None else get_spikein_fasta(),
     output:
         expand(DATABASE_DIR + "/emu/" + DATABASE_PREBUILT + "_prebuilt_spikein/{file}", file = ["species_taxid.fasta", "taxonomy.tsv"])
     params:
         taxdb = DATABASE_PREBUILT,
         database_dir = DATABASE_DIR,
+        spikein = get_spikein_fasta(),
     message: "Adding spikein to the prebuit Emu database [{params.taxdb}]"
     run:
-        add_spikein(input[0], input[1], input.spikein, output[0], output[1], spikein_tax="spikein")
+        add_spikein(input[0], input[1], params.spikein, output[0], output[1], spikein_tax="spikein")
        
 # download silva database
 rule download_silva:
@@ -152,9 +152,10 @@ rule silva_spikein:
     input:
         rules.filt_silva.output,
         rules.silva2ncbi_map.output,
-        spikein = "pass" if get_spikein_fasta() is None else get_spikein_fasta(),
     output:
         expand(DATABASE_DIR + "/silva_spikein/{file}", file = ["SILVA_ssu_nr99_filt.fasta", "silva_to_ncbi.map"])
+    params:
+        spikein = get_spikein_fasta(),
     message: "Adding spikein to the Silva database"
     run:
         # similar to rules.emu_spikein

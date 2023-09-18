@@ -6,7 +6,7 @@ def get_emu_database(spikein=config["spikein_fasta"]):
 
 rule emu:
     input: 
-        get_emu_database,
+        get_emu_database(),
         fq = rules.q_filter.output,
     output: temp("{batch}/emu/{barcode}_rel-abundance.tsv")
     conda: "../envs/emu.yaml"
