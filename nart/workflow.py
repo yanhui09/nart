@@ -294,11 +294,18 @@ def run_workflow(workflow, workdir, configfile, jobs, maxmem, profile, dryrun, s
     help="Subsample the reads.",
 )
 @click.option(
-    "--trim",
+    "--chimera-filt",
     is_flag=True,
     default=False,
     show_default=True,
-    help="Trim primers.",
+    help="Filter chimeric reads.",
+)
+@click.option(
+    "--primer-check",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Check primer pattern.",
 )
 @click.option(
     "--classifier",
@@ -322,15 +329,17 @@ def run_workflow(workflow, workdir, configfile, jobs, maxmem, profile, dryrun, s
     help="Number of jobs for threads-dependent tasks.",
 )
 def config_workflow(
-    bascfq, demuxdir, dbdir, workdir, demuxer, fqs_min, subsample, trim, 
-    classifier, jobs_min, jobs_max):
+    bascfq, demuxdir, dbdir, workdir, demuxer, fqs_min, subsample, 
+    chimera_filt, primer_check,classifier, jobs_min, jobs_max
+    ):
     """
     Config NAWF.
     """ 
     logger.info(f"NAWF version: {__version__}")
     init_conf(
-        bascfq, demuxdir, dbdir, workdir, "config.yaml", demuxer, fqs_min, subsample,
-        trim, classifier, jobs_min, jobs_max)
+    bascfq, demuxdir, dbdir, workdir, "config.yaml", demuxer, fqs_min, subsample, 
+    chimera_filt, primer_check, classifier, jobs_min, jobs_max
+    )
    
 if __name__ == "__main__":
     cli()

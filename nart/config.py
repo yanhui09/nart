@@ -12,7 +12,8 @@ def init_conf(
     demuxer = "guppy",
     nreads_m = 1000,
     subsample=False,
-    trim=False,
+    chimera_filt=False,
+    primer_check=False,
     classifier="minimap2lca",
     jobs_m=2,
     jobs_M=6,
@@ -29,7 +30,8 @@ def init_conf(
         demuxer (str): the demultiplexer [default: "guppy"]
         nreads_m (int): minimum number of reads for the demultiplexed fastqs
         subsample (bool): if True, subsample the reads [default: False]
-        trim (bool): if True, trim the primers [default: False]
+        chimera_filt (bool): if False, do not filter possible chimeric reads [default: False]
+        primer_check (bool): if False, do not check primer pattern [default: False]
         minimap2lca (str): the classifier [default: "minimap2lca"]
         jobs_m (int): number of jobs for common tasks [default: 2]
         jobs_M (int): number of jobs for threads-dependent tasks [default: 6]
@@ -49,7 +51,8 @@ def init_conf(
     conf["demuxer"] = demuxer
     conf["nreads_m"] = nreads_m
     conf["subsample"] = subsample
-    conf["trim"] = trim
+    conf["chimera_filt"] = chimera_filt
+    conf["primer_check"] = primer_check
     conf["classifier"] = classifier
     conf["threads"]["normal"] = jobs_m
     conf["threads"]["large"] = jobs_M

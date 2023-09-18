@@ -189,11 +189,9 @@ Usage: nawf config [OPTIONS]
 
 Options:
   -b, --bascfq PATH               Path to a basecalled fastq file. Option is
-                                  required if 'demuxdir' not provided. Option
-                                  is mutually exclusive with 'demuxdir'.
+                                  mutually exclusive with 'demuxdir'.
   -x, --demuxdir PATH             Path to a directory of demultiplexed fastq
-                                  files. Option is required if 'bascfq' not
-                                  provided. Option is mutually exclusive with
+                                  files. Option is mutually exclusive with
                                   'bascfq'.
   -d, --dbdir PATH                Path to the taxonomy databases.  [required]
   -w, --workdir PATH              Output directory for NAWF.  [default: .]
@@ -201,7 +199,8 @@ Options:
   --fqs-min INTEGER               Minimum number of reads for the
                                   demultiplexed fastqs.  [default: 50]
   --subsample                     Subsample the reads.
-  --trim                          Trim primers.
+  --chimera-filt                  Filter chimeric reads.
+  --primer-check                  Check primer pattern.
   --classifier [emu|minimap2lca|blast2lca]
                                   Classifier.  [default: emu]
   --jobs-min INTEGER              Number of jobs for common tasks.  [default:
