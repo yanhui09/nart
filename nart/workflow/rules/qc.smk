@@ -57,7 +57,8 @@ rule minimap2ava:
     params:
         x = "ava-ont",
         g = 500,
-        f = 1000,
+        # https://github.com/lh3/minimap2/issues/897
+        f = 10000,
     log: "logs/qc/yacrd/{barcode}_{batch}_ava.log"
     benchmark: "benchmarks/qc/yacrd/{barcode}_{batch}_ava.txt"
     threads: config["threads"]["large"]
