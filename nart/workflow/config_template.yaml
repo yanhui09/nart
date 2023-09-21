@@ -73,3 +73,5 @@ lca:
 emu:
   # emu|rdp|silva|unite-fungi|unite-all
   prebuilt_database: emu
+  min_rel_abundance: 0.0001
+  export_rel_abundance: false

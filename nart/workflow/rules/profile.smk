@@ -12,7 +12,8 @@ rule emu:
     conda: "../envs/emu.yaml"
     params: 
         db = DATABASE_DIR + "/emu/" + DATABASE_PREBUILT + "_prebuilt" if config["spikein_fasta"] == "none" else DATABASE_DIR + "/emu/" + DATABASE_PREBUILT + "_prebuilt_spikein",
-        outdir = os.getcwd() + "/{batch}/emu"
+        outdir = os.getcwd() + "/{batch}/emu",
+        min_abundance = config["emu"]["min_rel_abundance"],
     log: "logs/emu/{barcode}_{batch}.log"
     benchmark: "benchmarks/emu/{barcode}_{batch}.txt"
     threads: config["threads"]["large"]
@@ -21,7 +22,7 @@ rule emu:
         time = config["runtime"]["default"],
     shell:
         """
-        emu abundance --db {params.db} {input.fq} --keep-counts --threads {threads} --output-dir {params.outdir} > {log} 2>&1 || touch {output}
+        emu abundance --db {params.db} {input.fq} --min-abundance {params.min_abundance} --keep-counts --threads {threads} --output-dir {params.outdir} > {log} 2>&1 || touch {output}
         # if {output} empty, rm *_emu_alignments.sam and send warning message to log
         if [ ! -s {output} ]
         then
@@ -45,50 +46,76 @@ rule emu_merge:
     output: "batches/emu_{batch}.tsv"
     params:
         db = DATABASE_PREBUILT,
+        threshold = config["emu"]["min_rel_abundance"],
+        export_rel_abundance = config["emu"]["export_rel_abundance"],
     resources:
         mem = config["mem"]["normal"],
     run:
         import pandas as pd
-        # merge tsv files
-        otu_table = pd.DataFrame()
-        for f in input.otutab:
-            if os.stat(f).st_size == 0:
-                continue
-            barcode = os.path.basename(f).split("_")[0]
-            table = pd.read_csv(f, sep="\t")
-            if params.db == 'silva':
-                # siliva ouput one 'lineage' column
-                table = table.rename(columns={"lineage": "taxonomy"})
-            else:
-                # combine "superkingdom", "phylum", "class", "order", "family", "genus", "species" into "taxonomy"
-                # if empty, skip
-                columns_to_combine = ["superkingdom", "phylum", "class", "order", "family", "genus", "species"]
-                # na to ""
-                table[columns_to_combine] = table[columns_to_combine].fillna("")
-                table["taxonomy"] = table[columns_to_combine].apply(lambda x: ";".join(x), axis=1)
-            # if tax_id is "unassigned", taxonomy is "unassigned"
-            table.loc[table["tax_id"] == "unassigned", "taxonomy"] = "unassigned"
-            # if taxonomy is ";;;;;;spikein", taxonomy is "spikein"
-            table.loc[table["taxonomy"] == ";;;;;;spikein", "taxonomy"] = "spikein"
-            # only keep "tax_id", "estimated counts", "taxonomy"
-            table = table[["tax_id", "taxonomy", "estimated counts"]]
-            # use integer for "estimated counts"
-            table["estimated counts"] = table["estimated counts"].astype(int)
-            # rename "estimated counts" to sample name
-            table = table.rename(columns={"estimated counts": barcode})
-            # merge table into otu_table
+        def merge_table(list_otutab, col_abundance, file_out):
+            # merge tsv files
+            otu_table = pd.DataFrame()
+            for f in list_otutab:
+                if os.stat(f).st_size == 0:
+                    continue
+                barcode = os.path.basename(f).split("_")[0]
+                table = pd.read_csv(f, sep="\t")
+                if params.db == 'silva':
+                    # siliva ouput one 'lineage' column
+                    table = table.rename(columns={"lineage": "taxonomy"})
+                else:
+                    # combine "superkingdom", "phylum", "class", "order", "family", "genus", "species" into "taxonomy"
+                    # if empty, skip
+                    columns_to_combine = ["superkingdom", "phylum", "class", "order", "family", "genus", "species"]
+                    # na to ""
+                    table[columns_to_combine] = table[columns_to_combine].fillna("")
+                    table["taxonomy"] = table[columns_to_combine].apply(lambda x: ";".join(x), axis=1)
+                # if tax_id is "unassigned", taxonomy is "unassigned"
+                table.loc[table["tax_id"] == "unassigned", "taxonomy"] = "unassigned"
+                # if taxonomy is ";;;;;;spikein", taxonomy is "spikein"
+                table.loc[table["taxonomy"] == ";;;;;;spikein", "taxonomy"] = "spikein"
+                # only keep "tax_id","taxonomy", type_abundance = "estimated counts" or "abundance"
+                table = table[["tax_id", "taxonomy", col_abundance]]
+                if col_abundance == "estimated counts":
+                    # use integer for "estimated counts"
+                    table[[col_abundance]] = table[[col_abundance]].astype(int)
+                else:
+                    # use float for "abundance"
+                    table[[col_abundance]] = table[[col_abundance]].astype(float)
+                # rename col_abundance to sample name
+                table = table.rename(columns={col_abundance: barcode})
+                # merge table into otu_table
+                if otu_table.empty:
+                    otu_table = table
+                else:
+                    otu_table = pd.merge(otu_table, table, on=["tax_id", "taxonomy"], how="outer")
+            # fill NaN with 0
+            otu_table = otu_table.fillna(0)
+            # if dataframe is empty, use open() to create empty file to avoid an empty line in output
             if otu_table.empty:
-                otu_table = table
+                open(file_out, 'w').close()
             else:
-                otu_table = pd.merge(otu_table, table, on=["tax_id", "taxonomy"], how="outer")
-        # fill NaN with 0
-        otu_table = otu_table.fillna(0)
-        # if dataframe is empty, use open() to create empty file to avoid an empty line in output
-        if otu_table.empty:
-            open(output[0], 'w').close()
-        else:
-            # write otu_table to file; integer without decimal
-            otu_table.to_csv(output[0], sep="\t", index=False, float_format="%.0f")
+                # write otu_table to file; integer without decimal
+                if col_abundance == "estimated counts":
+                    otu_table.to_csv(file_out, sep="\t", index=False, float_format="%.0f")
+                else:
+                    otu_table.to_csv(file_out, sep="\t", index=False)
+            
+        # use estimated counts as default
+        merge_table(input.otutab, "estimated counts", output[0])
+        if params.export_rel_abundance is True:
+            emu_extra = os.getcwd() + "/emu_extra/"
+            os.makedirs(emu_extra, exist_ok=True)
+            merge_table(input.otutab, "abundance", emu_extra + wildcards.batch + "_rel.tsv")
+        # possibly excluded
+        otutab_unpassed = [os.path.dirname(i) + "/" + os.path.basename(i).replace("-abundance", "-abundance-threshold-" + str(params.threshold)) for i in input.otutab]
+        # if params.export_rel_abundance is True or any(otutab_unpassed) exists, create emu_extra folder
+        if any(os.path.exists(i) for i in otutab_unpassed):
+            emu_extra = os.getcwd() + "/emu_extra/"
+            os.makedirs(emu_extra, exist_ok=True)
+            merge_table(otutab_unpassed, "estimated counts", emu_extra + wildcards.batch + "_excluded.tsv")
+            if params.export_rel_abundance is True:
+                merge_table(otutab_unpassed, "abundance", emu_extra + wildcards.batch + "_excluded_rel.tsv")
 
 def get_silva_database(mode="minimap2", spikein=config["spikein_fasta"], taxmap=False):
     if spikein == "none":
