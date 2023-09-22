@@ -56,6 +56,8 @@ rule emu_merge:
             # merge tsv files
             otu_table = pd.DataFrame()
             for f in list_otutab:
+                if not os.path.exists(f):
+                    continue
                 if os.stat(f).st_size == 0:
                     continue
                 barcode = os.path.basename(f).split("_")[0]
