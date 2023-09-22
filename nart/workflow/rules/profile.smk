@@ -119,9 +119,16 @@ rule emu_merge:
             if params.export_rel_abundance is True:
                 merge_table(otutab_unpassed, "abundance", emu_extra + wildcards.batch + "_excluded_rel.tsv")
             # clean-up
-            for f in otutab_unpassed:
-                if os.path.exists(f):
-                    os.remove(f)
+            for i in otutab_unpassed:
+                if os.path.exists(i):
+                    os.remove(i)
+            batch_dir = os.getcwd() + "/" + wildcards.batch
+            emu_dir = batch_dir + "/emu"
+            # if empty dir, remove 
+            if not os.listdir(emu_dir): 
+                os.rmdir(emu_dir)
+            if not os.listdir(batch_dir): 
+                os.rmdir(batch_dir)
 
 def get_silva_database(mode="minimap2", spikein=config["spikein_fasta"], taxmap=False):
     if spikein == "none":
