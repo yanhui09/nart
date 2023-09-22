@@ -118,6 +118,10 @@ rule emu_merge:
             merge_table(otutab_unpassed, "estimated counts", emu_extra + wildcards.batch + "_excluded.tsv")
             if params.export_rel_abundance is True:
                 merge_table(otutab_unpassed, "abundance", emu_extra + wildcards.batch + "_excluded_rel.tsv")
+            # clean-up
+            for f in otutab_unpassed:
+                if os.path.exists(f):
+                    os.remove(f)
 
 def get_silva_database(mode="minimap2", spikein=config["spikein_fasta"], taxmap=False):
     if spikein == "none":
