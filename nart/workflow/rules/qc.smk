@@ -49,51 +49,9 @@ def get_raw(subsample = config["subsample"], n = config["seqkit"]["n"]):
     else:
         return rules.collect_fastq.output
 
-# filter chimeras with yacrd
-rule minimap2ava:
-    input: get_raw()
-    output: temp("{batch}/qc/yacrd/{barcode}.paf")
-    conda: "../envs/yacrd.yaml"
-    params:
-        x = "ava-ont",
-        g = 500,
-        # https://github.com/lh3/minimap2/issues/897
-        f = 10000,
-    log: "logs/qc/yacrd/{barcode}_{batch}_ava.log"
-    benchmark: "benchmarks/qc/yacrd/{barcode}_{batch}_ava.txt"
-    threads: config["threads"]["large"]
-    resources:
-        mem = config["mem"]["large"],
-        time = config["runtime"]["simple"],
-    shell: "minimap2 -x {params.x} -g {params.g} -f {params.f} -t {threads} {input} {input} > {output} 2> {log}"
-
-rule yacrd:
-    input: 
-        fq = get_raw(),
-        ava = rules.minimap2ava.output
-    output: temp("{batch}/qc/yacrd/{barcode}.fastq")
-    conda: "../envs/yacrd.yaml"
-    params:
-        c = config["yacrd"]["c"],
-        n = config["yacrd"]["n"],
-    log: "logs/qc/yacrd/{barcode}_{batch}_scrubb.log"
-    benchmark: "benchmarks/qc/yacrd/{barcode}_{batch}_scrubb.txt"
-    threads: config["threads"]["large"]
-    resources:
-        mem = config["mem"]["large"],
-        time = config["runtime"]["simple"],
-    shell: "yacrd -i {input.ava} -o {log} -c {params.c} -n {params.n} -t {threads} filter -i {input.fq} -o {output} 2>> {log}"
-
-def get_chimera_free(chimera_filt= config["chimera_filt"], subsample = config["subsample"], n = config["seqkit"]["n"]):
-    check_val("chimera_filt", chimera_filt, bool)
-    if chimera_filt is True:
-        return rules.yacrd.output
-    else:
-        return get_raw(subsample, n)
-
 # check primer-pattern, process two strands independently
 rule check_primers:
-    input: get_chimera_free()
+    input: get_raw()
     output: 
         passed = temp("{batch}/qc/primers_passed/{barcode}F.fastq"),
         unpassed = temp("{batch}/qc/primers_unpassed/{barcode}F.fastq"),
@@ -101,7 +59,8 @@ rule check_primers:
         f = f5_pattern1,
         e = config["cutadapt"]["max_errors"],
         O = config["cutadapt"]["min_overlap"],
-        m = 1,
+        m = config["seqkit"]["min_len"],
+        M = config["seqkit"]["max_len"],
         action = config["cutadapt"]["action"],
     log: "logs/qc/check_primersF/{barcode}_{batch}.log"
     benchmark: "benchmarks/qc/check_primersF/{barcode}_{batch}.txt"
@@ -114,7 +73,7 @@ rule check_primers:
         cutadapt \
         --action={params.action} \
         -j {threads} \
-        -e {params.e} -O {params.O} -m {params.m} \
+        -e {params.e} -O {params.O} -m {params.m} -M {params.M} \
         {params.f} \
         --untrimmed-output {output.unpassed} \
         -o {output.passed} \
@@ -132,34 +91,84 @@ use rule check_primers as check_primersR with:
         f = f5_pattern2,
         e = config["cutadapt"]["max_errors"],
         O = config["cutadapt"]["min_overlap"],
-        m = 1,
+        m = config["seqkit"]["min_len"],
+        M = config["seqkit"]["max_len"],
         action = config["cutadapt"]["action"],
     log: 
         "logs/qc/check_primersR/{barcode}_{batch}.log"
     benchmark: 
         "benchmarks/qc/check_primersR/{barcode}_{batch}.txt"
 
-# reverse complement for reverse strand
-rule revcomp_fq:
-    input: rules.check_primersR.output.passed
-    output: temp("{batch}/qc/primers_passed/{barcode}R_revcomp.fastq")
-    log: "logs/qc/revcomp_fq/{barcode}_{batch}.log"
-    benchmark: "benchmarks/qc/revcomp_fq/{barcode}_{batch}.txt"
+# reverse complement for reverse strand; combine two strands
+rule revcomp_fq_combine:
+    input: 
+        primerF = rules.check_primers.output.passed,
+        primerR = rules.check_primersR.output.passed,
+    output: 
+        revcompR = temp("{batch}/qc/primers_passed/{barcode}R_revcomp.fastq"),
+        combined = temp("{batch}/qc/primers_passed/{barcode}.fastq"),
     threads: config["threads"]["normal"]
     resources:
         mem = config["mem"]["normal"],
         time = config["runtime"]["simple"],
-    shell: "seqkit seq -j {threads} -r -p -t dna {input} > {output} 2> {log}"
+    shell: 
+        """
+        seqkit seq -j {threads} -r -p -g -t dna {input.primerR} > {output.revcompR} --quiet
+        cat {input.primerF} {output.revcompR} > {output.combined}
+        """
 
-def primer_check(chimera_filt= config["chimera_filt"], primer_check = config["primer_check"], subsample = config["subsample"], n = config["seqkit"]["n"]):
+# option to trim or not
+def get_primer_check(primer_check = config["primer_check"], subsample = config["subsample"], n = config["seqkit"]["n"]):
     check_val("primer_check", primer_check, bool)
-    out = [rules.check_primers.output.passed, rules.revcomp_fq.output]
-    if primer_check is False:
-        out = get_chimera_free(chimera_filt, subsample, n)
-    return out
+    if primer_check is True:
+        return rules.revcomp_fq_combine.output.combined
+    else:
+        return get_raw(subsample, n)
+
+# filter chimeric reads
+rule minimap2ava_yacrd:
+    input: get_primer_check()
+    output: temp("{batch}/qc/yacrd/{barcode}.paf")
+    conda: "../envs/yacrd.yaml"
+    params:
+        x = "ava-ont",
+        g = 500,
+        # https://github.com/lh3/minimap2/issues/897
+        f = 10000,
+    log: "logs/qc/yacrd/{barcode}_{batch}_ava.log"
+    benchmark: "benchmarks/qc/yacrd/{barcode}_{batch}_ava.txt"
+    threads: config["threads"]["large"]
+    resources:
+        mem = config["mem"]["large"],
+        time = config["runtime"]["simple"],
+    shell: "minimap2 -x {params.x} -g {params.g} -f {params.f} -t {threads} {input} {input} > {output} 2> {log}"
+
+rule yacrd:
+    input: 
+        fq = get_primer_check(),
+        ava = rules.minimap2ava_yacrd.output
+    output: temp("{batch}/qc/yacrd/{barcode}.fastq")
+    conda: "../envs/yacrd.yaml"
+    params:
+        c = config["yacrd"]["c"],
+        n = config["yacrd"]["n"],
+    log: "logs/qc/yacrd/{barcode}_{batch}_filter.log"
+    benchmark: "benchmarks/qc/yacrd/{barcode}_{batch}_filter.txt"
+    threads: config["threads"]["large"]
+    resources:
+        mem = config["mem"]["large"],
+        time = config["runtime"]["simple"],
+    shell: "yacrd -i {input.ava} -o {log} -c {params.c} -n {params.n} -t {threads} filter -i {input.fq} -o {output} 2>> {log}"
+
+def get_chimera_free(chimera_filt= config["chimera_filt"], primer_check = config["primer_check"], subsample = config["subsample"], n = config["seqkit"]["n"]):
+    check_val("chimera_filt", chimera_filt, bool)
+    if chimera_filt is True:
+        return rules.yacrd.output
+    else:
+        return get_primer_check(primer_check, subsample, n)
 
 rule q_filter:
-    input: primer_check()
+    input: get_chimera_free()
     output: temp("{batch}/qc/qfilt/{barcode}.fastq")
     params:
         Q = config["seqkit"]["min_qual"],
