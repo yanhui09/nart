@@ -9,7 +9,7 @@ from flask import Flask, render_template
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 
-def generate_plot(input_file, relative=False, rm_unmapped=False, min_abs_abun=1):
+def generate_plot(input_file, relative=False, rm_unmapped=False, min_abs_abun=1, order_by='alpha'):
     df = pd.read_csv(input_file, sep='\t', index_col=0)
     if rm_unmapped:
         # taxonomy column equals "unassigned", remove it
@@ -20,8 +20,21 @@ def generate_plot(input_file, relative=False, rm_unmapped=False, min_abs_abun=1)
         df[df.columns[1:]] = df[df.columns[1:]].div(df[df.columns[1:]].sum(axis=0)) * 100
      
     sample_names = df.columns.tolist()[1:]
-    # Get a list of all unique taxa in the dataframe
-    taxa = df['taxonomy'].unique()
+    # get a list of unique taxa
+    # bottom up
+    # sort taxa by row-wise mean/median abundance in ascending order
+    if order_by == 'mean':
+        df['mean'] = df.mean(axis=1, numeric_only=True)
+        taxa = df.sort_values(by='mean', ascending=True)['taxonomy'].unique()
+        df = df.drop('mean', axis=1)
+        
+    elif order_by == 'median':
+        df['median'] = df.median(axis=1, numeric_only=True)
+        taxa = df.sort_values(by='median', ascending=True)['taxonomy'].unique()
+        df = df.drop('median', axis=1)
+    else:
+        # or alphabetical order
+        taxa = sorted(df['taxonomy'].unique(), reverse=True)
 
     data = []
     for i, taxon in enumerate(taxa):
@@ -83,7 +96,7 @@ def index():
     input_file = os.path.join(os.path.dirname(__file__), 'templates', 'input.tsv')
     #mod_time_str = get_modification_time(input_file)
     mod_time_str = '0000-00-00 00:00:00'
-    plot_json = generate_plot(input_file, relative=False, rm_unmapped=False, min_abs_abun=1)
+    plot_json = generate_plot(input_file, relative=False, rm_unmapped=False, min_abs_abun=1, order_by='alpha')
     num_fqs = 0
     num_batches = 0
     latest_fq = '0000-00-00 00:00:00'
@@ -95,7 +108,7 @@ def index():
                            latest_fq=latest_fq, latest_batch=latest_batch,
                            pct_complete=pct_complete)
 
-def run_server(port, work_dir, wait_time, relative, rm_unmapped, min_abs_abun):
+def run_server(port, work_dir, wait_time, relative, rm_unmapped, min_abs_abun, order_by):
     """
     Run the server.
     :param port: Port to run the app on.
@@ -118,7 +131,7 @@ def run_server(port, work_dir, wait_time, relative, rm_unmapped, min_abs_abun):
         
     @app.route('/plot')
     def plot():
-        return generate_plot(input_file, relative, rm_unmapped, min_abs_abun)
+        return generate_plot(input_file, relative, rm_unmapped, min_abs_abun, order_by)
     
     @app.route('/mod_time')
     def mod_time():

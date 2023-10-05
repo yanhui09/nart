@@ -341,8 +341,15 @@ def run(workdir, timeout, configfile, jobs, maxmem, profile, dryrun, snake_args)
     show_default=True,
     help='Minimum absolute abundance of a feature to plot.'
     )
-def run_app(port, input, wait_time, relative, rm_unmapped, min_abundance):
-   run_server(port, input, wait_time, relative, rm_unmapped, min_abundance) 
+@click.option(
+    '--order-by', 
+    type=click.Choice(['mean', 'median', 'alpha']),
+    default='mean', 
+    show_default=True,
+    help='Order taxonomic features by mean, median, or alphabetically.'
+    )
+def run_app(port, input, wait_time, relative, rm_unmapped, min_abundance, order_by):
+   run_server(port, input, wait_time, relative, rm_unmapped, min_abundance, order_by)
 
 if __name__ == "__main__":
     cli()

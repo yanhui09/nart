@@ -152,16 +152,18 @@ Options:
 Usage: nart visual [OPTIONS]
 
 Options:
-  -p, --port INTEGER       Port to run the app on.  [default: 5000]
-  -i, --input PATH         Path to the working directory.  [default: .]
-  -w, --wait-time INTEGER  Time to wait (in minutes) if input file is missing.
-                           [default: 5]
-  --relative               Use relative abundance instead of absolute
-                           abundance.
-  --rm-unmapped            Remove unmapped reads from the table.
-  --min-abundance INTEGER  Minimum absolute abundance of a feature to plot.
-                           [default: 1]
-  -h, --help               Show this message and exit.
+  -p, --port INTEGER              Port to run the app on.  [default: 5000]
+  -i, --input PATH                Path to the working directory.  [default: .]
+  -w, --wait-time INTEGER         Time to wait (in minutes) if input file is
+                                  missing.  [default: 5]
+  --relative                      Use relative abundance instead of absolute
+                                  abundance.
+  --rm-unmapped                   Remove unmapped reads from the table.
+  --min-abundance INTEGER         Minimum absolute abundance of a feature to
+                                  plot.  [default: 1]
+  --order-by [mean|median|alpha]  Order taxonomic features by mean, median, or
+                                  alphabetically.  [default: mean]
+  -h, --help                      Show this message and exit.
 ```
 
 ## nawf
